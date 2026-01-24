@@ -7,6 +7,88 @@ Personal and research blog with a focus on osteoarthritis of the knee.
 
 License: MIT
 
+## Features
+
+### Blog Application
+- **Wagtail CMS Integration**: Powerful content management system for creating and managing blog posts
+- **Rich Text Editor**: Create engaging blog posts with images, formatting, and embedded media
+- **Responsive Images**: Automatic image optimization and responsive design support
+- **Tags and Categories**: Organize blog posts with tags for easy discovery
+- **Comment System**: Registered users can leave comments on blog posts
+- **Comment Moderation**: Admin approval workflow for all comments before publication
+- **User Authentication**: Built-in user registration and authentication system
+
+### Content Management
+- **Blog Posts**: Create and publish articles with featured images, tags, and rich content
+- **Admin Interface**: Access the Wagtail admin at `/cms/` or Django admin at `/admin/`
+- **Media Management**: Upload and manage images through the Wagtail media library
+
+### User Features
+- **User Registration**: Users can create accounts to participate in discussions
+- **Comment System**: Authenticated users can comment on blog posts
+- **Profile Management**: Users can manage their profiles and view their activity
+
+## Getting Started
+
+### Prerequisites
+- Python 3.13 or higher
+- PostgreSQL (for production) or SQLite (for development)
+- pip or uv package manager
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Spiewart/squeaky_knees.git
+   cd squeaky_knees
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   # or with uv:
+   uv sync
+   ```
+
+3. Set up environment variables:
+   ```bash
+   export DJANGO_SETTINGS_MODULE=config.settings.local
+   export DATABASE_URL=postgres://username:password@localhost:5432/squeaky_knees
+   ```
+
+4. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+5. Create a superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+6. Run the development server:
+   ```bash
+   python manage.py runserver
+   ```
+
+### Creating Your First Blog
+
+1. Access the Wagtail admin interface at `http://localhost:8000/cms/`
+2. Log in with your superuser credentials
+3. Navigate to **Pages** in the sidebar
+4. Create a **Blog Index Page** as a child of the home page
+5. Under the Blog Index Page, create **Blog Page** instances for individual posts
+6. Add featured images, tags, and rich content to your blog posts
+7. Publish your pages to make them visible on the site
+
+### Managing Comments
+
+1. Access the Django admin at `http://localhost:8000/admin/`
+2. Navigate to **Blog** → **Comments**
+3. Review submitted comments
+4. Use the **Approve selected comments** action to publish comments
+5. Comments will appear on the blog post once approved
+
 ## Settings
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).
@@ -19,7 +101,7 @@ Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getti
 
 - To create a **superuser account**, use this command:
 
-      uv run python manage.py createsuperuser
+      python manage.py createsuperuser
 
 For convenience, you can keep your normal user logged in on Chrome and your superuser logged in on Firefox (or similar), so that you can see how the site behaves for both kinds of users.
 
@@ -27,19 +109,19 @@ For convenience, you can keep your normal user logged in on Chrome and your supe
 
 Running type checks with mypy:
 
-    uv run mypy squeaky_knees
+    mypy squeaky_knees
 
 ### Test coverage
 
 To run the tests, check your test coverage, and generate an HTML coverage report:
 
-    uv run coverage run -m pytest
-    uv run coverage html
-    uv run open htmlcov/index.html
+    coverage run -m pytest
+    coverage html
+    open htmlcov/index.html
 
 #### Running tests with pytest
 
-    uv run pytest
+    pytest
 
 ### Live reloading and Sass CSS compilation
 
@@ -51,6 +133,30 @@ Sentry is an error logging aggregator service. You can sign up for a free accoun
 The system is set up with reasonable defaults, including 404 logging and integration with the WSGI application.
 
 You must set the DSN url in production.
+
+## Project Structure
+
+```
+squeaky_knees/
+├── squeaky_knees/
+│   ├── blog/           # Blog application with Wagtail models
+│   ├── users/          # User management
+│   ├── templates/      # Django templates
+│   └── static/         # Static files (CSS, JS, images)
+├── config/             # Django settings and configuration
+├── docs/               # Documentation
+└── tests/              # Test files
+```
+
+## Technology Stack
+
+- **Framework**: Django 5.2
+- **CMS**: Wagtail 6.4
+- **Authentication**: Django Allauth
+- **Frontend**: Bootstrap 5
+- **Database**: PostgreSQL (production), SQLite (development)
+- **Image Processing**: Pillow, Wagtail Images
+- **Tags**: django-taggit
 
 ## Deployment
 

@@ -1,3 +1,58 @@
 {% extends "base.html" %}
 
+{% load static %}
 
+{% block title %}
+  Squeaky Knees - Personal Blog on Osteoarthritis
+{% endblock title %}
+{% block content %}
+  <div class="container mt-5">
+    <div class="jumbotron">
+      <h1 class="display-4">Welcome to Squeaky Knees</h1>
+      <p class="lead">A personal and research blog focused on osteoarthritis of the knee.</p>
+      <hr class="my-4" />
+      <p>
+        Explore the latest insights, research, and personal experiences related to knee health and osteoarthritis management.
+      </p>
+      {# Blog URL is managed by Wagtail's page tree routing #}
+      <a class="btn btn-primary btn-lg" href="/blog/" role="button">Read the Blog</a>
+      {% if not user.is_authenticated %}
+        <a class="btn btn-secondary btn-lg"
+           href="{% url 'account_signup' %}"
+           role="button">Join the Community</a>
+      {% endif %}
+    </div>
+    <div class="row mt-5">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fas fa-book"></i> Research Articles
+            </h5>
+            <p class="card-text">Access detailed research and analysis on knee osteoarthritis treatments and management.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fas fa-users"></i> Community Discussion
+            </h5>
+            <p class="card-text">Join the conversation by creating an account and sharing your experiences with others.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="fas fa-newspaper"></i> Latest Updates
+            </h5>
+            <p class="card-text">Stay informed with the latest blog posts and updates on knee health research.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
