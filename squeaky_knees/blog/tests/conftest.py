@@ -1,0 +1,83 @@
+import pytest
+from django.contrib.auth import get_user_model
+from wagtail.models import Page
+from wagtail.models import Site
+
+from squeaky_knees.blog.models import BlogIndexPage
+from squeaky_knees.blog.models import BlogPage
+
+User = get_user_model()
+
+
+@pytest.fixture
+def user(db):
+    """Create a test user."""
+    return User.objects.create_user(
+        username="testuser",
+        email="test@example.com",
+        password="testpass123",
+    )
+
+
+@pytest.fixture
+def admin_user(db):
+    """Create an admin user."""
+    return User.objects.create_superuser(
+        username="admin",
+        email="admin@example.com",
+        password="admin123",
+    )
+
+
+@pytest.fixture
+def blog_index(db):
+    """Create a blog index page."""
+    # Get or create the default site
+
+    site = Site.objects.filter(is_default_site=True).first()
+    if not site:
+        # Get the root page (created by Wagtail)
+        root = Page.objects.first()
+        if not root:
+            # Create a root page if it doesn't exist
+            from wagtail.models import Page as WagtailPage
+
+            root = WagtailPage.add_root(title="Root", slug="root")
+
+        # Create default site
+        site = Site.objects.create(
+            hostname="localhost",
+            port=80,
+            site_name="Test Site",
+            root_page=root,
+            is_default_site=True,
+        )
+    else:
+        root = site.root_page
+
+    # Create blog index page
+    blog_index = BlogIndexPage(
+        title="Blog",
+        intro="<p>Welcome to the blog</p>",
+        slug="blog",
+    )
+    root.add_child(instance=blog_index)
+    blog_index.save_revision().publish()
+    return blog_index
+
+
+@pytest.fixture
+def blog_post(db, blog_index, admin_user):
+    """Create a blog post."""
+    from datetime import date
+
+    blog_post = BlogPage(
+        title="Test Blog Post",
+        date=date.today(),
+        intro="This is a test blog post",
+        body="<p>This is the body of the test post</p>",
+        slug="test-blog-post",
+    )
+    blog_index.add_child(instance=blog_post)
+    blog_post.save_revision().publish()
+    return blog_post

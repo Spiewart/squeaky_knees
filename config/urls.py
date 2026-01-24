@@ -5,6 +5,9 @@ from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
 from django.views.generic import TemplateView
+from wagtail import urls as wagtail_urls
+from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
@@ -18,10 +21,21 @@ urlpatterns = [
     # User management
     path("users/", include("squeaky_knees.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    # Wagtail Admin
+    path("cms/", include(wagtailadmin_urls)),
+    # Wagtail Documents
+    path("documents/", include(wagtaildocs_urls)),
+    # Blog app actions (comment submission, etc.)
+    path("blog/actions/", include("squeaky_knees.blog.urls", namespace="blog")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+]
+
+# Wagtail pages - should be last to catch all other URLs
+urlpatterns += [
+    path("blog/", include(wagtail_urls)),
 ]
 
 

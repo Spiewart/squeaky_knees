@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% load static wagtailcore_tags crispy_forms_tags %}
+
+{% block title %}{{ page.title }}{% endblock %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <article>
+          {% if page.header_image %}
+            <img src="{{ page.header_image.file.url }}"
+                 class="img-fluid mb-4"
+                 alt="{{ page.title }}" />
+          {% endif %}
+          <h1>{{ page.title }}</h1>
+          <p class="text-muted">
+            <small>Published on {{ page.date }}</small>
+          </p>
+          {% if page.tags.all %}
+            <div class="mb-3">
+              {% for tag in page.tags.all %}<span class="badge bg-secondary">{{ tag }}</span>{% endfor %}
+            </div>
+          {% endif %}
+          <div class="lead">{{ page.intro }}</div>
+          <hr />
+          <div class="blog-content">{{ page.body|richtext }}</div>
+        </article>
+        <hr class="my-5" />
+        <!-- Comments Section -->
+        <div class="comments-section">
+          <h3>Comments</h3>
+          {% if comments %}
+            {% for comment in comments %}
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h6 class="card-subtitle mb-2 text-muted">{{ comment.author.username }} - {{ comment.created|date:"F d, Y H:i" }}</h6>
+                  <p class="card-text">{{ comment.text }}</p>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p>No comments yet. Be the first to comment!</p>
+          {% endif %}
+          {% if user.is_authenticated %}
+            <h4 class="mt-4">Leave a Comment</h4>
+            <form method="post" action="{% url 'blog:add_comment' page.id %}">
+              {% csrf_token %}
+              {% crispy comment_form %}
+              <button type="submit" class="btn btn-primary">Submit Comment</button>
+            </form>
+            <p class="text-muted mt-2">
+              <small>Note: Comments are reviewed by moderators before being published.</small>
+            </p>
+          {% else %}
+            <p class="alert alert-info mt-4">
+              <a href="{% url 'account_login' %}?next={{ request.path }}">Log in</a> to leave a comment.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}
