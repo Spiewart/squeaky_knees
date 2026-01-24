@@ -21,7 +21,7 @@ This project uses multiple linting and formatting tools to maintain code quality
 - **Ruff**: Python linting and formatting (replaces Black, isort, flake8)
 - **djLint**: Django/Wagtail template linting and formatting
 - **Pre-commit**: Git hooks that run linters before commits
-- **django-upgrade**: Automatically upgrades Django syntax to target version 5.2
+- **Django Upgrade**: Automatically upgrades Django syntax to target version 5.2
 
 ## Running Linters Locally
 
@@ -48,8 +48,10 @@ ruff check --fix .
 # Format code with ruff
 ruff format .
 
-# Format Django templates
-djlint --reformat **/*.html
+# Format Django templates (use quotes for glob patterns)
+djlint --reformat "**/*.html"
+# Or reformat all templates in current directory
+djlint --reformat .
 ```
 
 ### Install Pre-commit Hooks
@@ -393,7 +395,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DATABASE_PASSWORD = env("POSTGRES_PASSWORD")
 
 # WRONG:
-SECRET_KEY = "my-secret-key-12345"  # Never hardcode!
+SECRET_KEY = "***NEVER-PUT-REAL-SECRETS-HERE***"  # Never hardcode!
 ```
 
 ### Model Best Practices
@@ -577,7 +579,7 @@ def get_form_class(self):
 
 ```python
 # WRONG (production):
-API_KEY = "sk_test_12345"
+API_KEY = "***NEVER-PUT-REAL-KEYS-HERE***"
 
 # CORRECT:
 import os
@@ -627,11 +629,11 @@ pre-commit run --all-files
 # Run specific linters
 ruff check .
 ruff format .
-djlint --lint **/*.html
+djlint --lint .
 
 # Auto-fix issues
 ruff check --fix .
-djlint --reformat **/*.html
+djlint --reformat .
 
 # Run tests
 pytest
