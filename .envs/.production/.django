@@ -1,0 +1,44 @@
+# General
+# ------------------------------------------------------------------------------
+# DJANGO_READ_DOT_ENV_FILE=True
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_SECRET_KEY=A9HD9PrtPRWcNumRm80IFKx4mItrvhur3rU2tIf3TxWqev9mNhK8Nmibd2Heh8yF
+DJANGO_ADMIN_URL=PopS9Qh9v19JxC3JWqzx32ruV22ZH9Bx/
+DJANGO_ALLOWED_HOSTS=.squeakyknees.blog
+
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# Email
+# ------------------------------------------------------------------------------
+DJANGO_SERVER_EMAIL=
+
+MAILGUN_API_KEY=
+MAILGUN_DOMAIN=
+
+
+# AWS
+# ------------------------------------------------------------------------------
+DJANGO_AWS_ACCESS_KEY_ID=
+DJANGO_AWS_SECRET_ACCESS_KEY=
+DJANGO_AWS_STORAGE_BUCKET_NAME=
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+# Sentry
+# ------------------------------------------------------------------------------
+SENTRY_DSN=
+
+
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
