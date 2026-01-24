@@ -32,4 +32,3 @@ class CommentAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} comment(s) unapproved.")
 
     unapprove_comments.short_description = "Unapprove selected comments"
-
