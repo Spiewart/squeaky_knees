@@ -271,3 +271,4 @@ dump.rdb
 squeaky_knees/media/
 
 .pytest_cache/
+*.sqlite3
