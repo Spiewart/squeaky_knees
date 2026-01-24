@@ -25,8 +25,8 @@ urlpatterns = [
     path("cms/", include(wagtailadmin_urls)),
     # Wagtail Documents
     path("documents/", include(wagtaildocs_urls)),
-    # Blog app
-    path("blog/", include("squeaky_knees.blog.urls", namespace="blog")),
+    # Blog app actions (comment submission, etc.)
+    path("blog/actions/", include("squeaky_knees.blog.urls", namespace="blog")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

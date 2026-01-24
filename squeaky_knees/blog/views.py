@@ -23,5 +23,4 @@ def add_comment(request, page_id):
                 request,
                 "Your comment has been submitted and is awaiting moderation.",
             )
-            return redirect(blog_page.url)
     return redirect(blog_page.url)
