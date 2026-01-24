@@ -120,6 +120,11 @@ ignore = [
     "S101", # Use of assert detected https://docs.astral.sh/ruff/rules/assert/
     "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
     "SIM102", # sometimes it's better to nest
+    "PLR2004", # Magic value used in comparison (test status codes, etc.)
+    "RUF005", # Consider iterable unpacking instead of concatenation (Wagtail patterns)
+    "PLC0415", # Import should be at top-level (lazy imports for performance/circular imports)
+    "S106", # Possible hardcoded password (false positive in test fixtures)
+    "DTZ011", # datetime.date.today() without timezone (acceptable in test fixtures)
     # of types for comparison.
     # Deactivated because it can make the code slow:
     # https://github.com/astral-sh/ruff/issues/7871
