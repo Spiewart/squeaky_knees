@@ -33,7 +33,6 @@ def admin_user(db):
 def blog_index(db):
     """Create a blog index page."""
     # Get or create the default site
-    from wagtail.models import Site
 
     site = Site.objects.filter(is_default_site=True).first()
     if not site:

@@ -1,5 +1,4 @@
 import pytest
-from django.test import Client
 from django.urls import reverse
 
 from squeaky_knees.blog.models import Comment
@@ -76,7 +75,9 @@ class TestBlogViews:
 class TestCommentForm:
     """Tests for comment form."""
 
-    def test_comment_form_visible_for_authenticated_users(self, blog_post, user, client):
+    def test_comment_form_visible_for_authenticated_users(
+        self, blog_post, user, client
+    ):
         """Test comment form is visible for authenticated users."""
         client.force_login(user)
         response = client.get(blog_post.url)
