@@ -76,7 +76,10 @@ class TestCommentForm:
     """Tests for comment form."""
 
     def test_comment_form_visible_for_authenticated_users(
-        self, blog_post, user, client
+        self,
+        blog_post,
+        user,
+        client,
     ):
         """Test comment form is visible for authenticated users."""
         client.force_login(user)
