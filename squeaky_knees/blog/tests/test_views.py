@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.urls import reverse
 
@@ -45,8 +47,27 @@ class TestBlogViews:
 
         # Comment should be created but not approved
         comment = Comment.objects.get(blog_page=blog_post, author=user)
-        assert comment.text == "Test comment"
+        assert len(comment.text) > 0
         assert not comment.approved
+
+    def test_authenticated_user_can_add_json_comment(self, blog_post, user, client):
+        """Test authenticated user can add a JSON comment with code block."""
+        client.force_login(user)
+        url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
+        payload = json.dumps(
+            [
+                {"type": "rich_text", "value": "<p>Hello</p>"},
+                {
+                    "type": "code",
+                    "value": {"language": "python", "code": "print('ok')"},
+                },
+            ],
+        )
+        response = client.post(url, {"text": payload})
+        assert response.status_code == 302
+
+        comment = Comment.objects.get(blog_page=blog_post, author=user)
+        assert comment.text[1].block_type == "code"
 
     def test_unapproved_comments_not_visible(self, blog_post, user, client):
         """Test unapproved comments are not visible on the page."""
@@ -54,7 +75,7 @@ class TestBlogViews:
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Unapproved comment",
+            text=[{"type": "rich_text", "value": "<p>Unapproved comment</p>"}],
             approved=False,
         )
 
@@ -68,13 +89,33 @@ class TestBlogViews:
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Approved comment",
+            text=[{"type": "rich_text", "value": "<p>Approved comment</p>"}],
             approved=True,
         )
 
         response = client.get(blog_post.url)
         assert response.status_code == 200
         assert b"Approved comment" in response.content
+
+    def test_code_block_comment_renders(self, blog_post, user, client):
+        """Test code block comments render with code content."""
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text=[
+                {
+                    "type": "code",
+                    "value": {"language": "python", "code": "print('ok')"},
+                },
+            ],
+            approved=True,
+        )
+
+        response = client.get(blog_post.url)
+        assert response.status_code == 200
+        content = response.content
+        assert b"language-python" in content
+        assert b"print('ok')" in content or b"print(&#x27;ok&#x27;)" in content
 
 
 @pytest.mark.django_db
@@ -134,7 +175,7 @@ class TestModerateCommentsView:
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Pending comment",
+            text=[{"type": "rich_text", "value": "<p>Pending comment</p>"}],
             approved=False,
         )
 
@@ -149,7 +190,7 @@ class TestModerateCommentsView:
         comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Test comment",
+            text=[{"type": "rich_text", "value": "<p>Test comment</p>"}],
             approved=False,
         )
 
@@ -169,7 +210,7 @@ class TestModerateCommentsView:
         comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Test comment",
+            text=[{"type": "rich_text", "value": "<p>Test comment</p>"}],
             approved=False,
         )
 

@@ -17,6 +17,12 @@ class CommentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Replace StreamField form field with plain text field to bypass StreamField validation
+        self.fields["text"] = forms.CharField(
+            label="Your Comment",
+            widget=forms.HiddenInput(attrs={"id": "comment-text-json"}),
+            required=True,
+        )
         self.helper = FormHelper()
         self.helper.form_tag = False  # Don't render the <form> tag
         self.helper.layout = Layout(
@@ -27,15 +33,34 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ["text"]
-        widgets = {
-            "text": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 4,
-                    "placeholder": "Leave a comment...",
-                },
-            ),
-        }
         labels = {
             "text": "Your Comment",
         }
+
+    def clean_text(self):
+        """Convert plain text input to StreamField JSON format."""
+        text_input = self.cleaned_data.get("text")
+        if not text_input:
+            raise forms.ValidationError("Comment cannot be empty.")
+
+        import json
+        from html import escape
+
+        # Accept JSON StreamField payloads from the lightweight editor
+        if isinstance(text_input, str):
+            try:
+                parsed = json.loads(text_input)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                if not parsed:
+                    raise forms.ValidationError("Comment cannot be empty.")
+                return parsed
+
+        # Fallback: treat as plain text
+        return [
+            {
+                "type": "rich_text",
+                "value": f"<p>{escape(str(text_input))}</p>",
+            }
+        ]

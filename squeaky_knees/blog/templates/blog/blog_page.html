@@ -39,7 +39,11 @@
               <div class="card mb-3">
                 <div class="card-body">
                   <h6 class="card-subtitle mb-2 text-muted">{{ comment.author.username }} - {{ comment.created|date:"F d, Y H:i" }}</h6>
-                  <p class="card-text">{{ comment.text }}</p>
+                  <div class="card-text">
+                    {% for block in comment.text %}
+                      {% include_block block %}
+                    {% endfor %}
+                  </div>
                 </div>
               </div>
             {% endfor %}
@@ -50,7 +54,23 @@
             <h4 class="mt-4">Leave a Comment</h4>
             <form method="post" action="{% url 'blog:add_comment' page.id %}">
               {% csrf_token %}
-              {% crispy comment_form %}
+              {{ comment_form.text }}
+              <div class="mb-3" id="comment-blocks">
+                <div class="comment-block" data-block-type="rich_text">
+                  <label class="form-label">Text</label>
+                  <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Text formatting">
+                    <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="bold"><strong>B</strong></button>
+                    <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="italic"><em>I</em></button>
+                    <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="createLink">Link</button>
+                  </div>
+                  <div class="form-control comment-block-input" contenteditable="true" data-input-type="rich" style="min-height: 120px;"></div>
+                </div>
+              </div>
+              <div class="mb-3 d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="add-text-block">Add Text</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="add-code-block">Add Code</button>
+              </div>
+              {{ comment_form.captcha }}
               <button type="submit" class="btn btn-primary">Submit Comment</button>
             </form>
             <p class="text-muted mt-2">
@@ -65,4 +85,96 @@
       </div>
     </div>
   </div>
+  <script>
+    (function () {
+      const blocksContainer = document.getElementById("comment-blocks");
+      const addTextBtn = document.getElementById("add-text-block");
+      const addCodeBtn = document.getElementById("add-code-block");
+      const jsonField = document.getElementById("comment-text-json");
+
+      if (!blocksContainer || !addTextBtn || !addCodeBtn || !jsonField) return;
+
+      const createTextBlock = () => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "comment-block";
+        wrapper.dataset.blockType = "rich_text";
+        wrapper.innerHTML = `
+          <label class="form-label">Text</label>
+          <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Text formatting">
+            <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="bold"><strong>B</strong></button>
+            <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="italic"><em>I</em></button>
+            <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="createLink">Link</button>
+          </div>
+          <div class="form-control comment-block-input" contenteditable="true" data-input-type="rich" style="min-height: 120px;"></div>
+        `;
+        return wrapper;
+      };
+
+      const createCodeBlock = () => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "comment-block";
+        wrapper.dataset.blockType = "code";
+        wrapper.innerHTML = `
+          <label class="form-label">Code</label>
+          <input type="text" class="form-control comment-code-language mb-2" placeholder="Language (e.g., python, javascript)">
+          <textarea class="form-control comment-block-input" rows="6" placeholder="Paste code here..."></textarea>
+        `;
+        return wrapper;
+      };
+
+      addTextBtn.addEventListener("click", () => {
+        blocksContainer.appendChild(createTextBlock());
+      });
+
+      addCodeBtn.addEventListener("click", () => {
+        blocksContainer.appendChild(createCodeBlock());
+      });
+
+      const form = jsonField.closest("form");
+      form.addEventListener("click", (event) => {
+        const button = event.target.closest(".comment-format");
+        if (!button) return;
+        event.preventDefault();
+        const cmd = button.dataset.cmd;
+        if (!cmd) return;
+        if (cmd === "createLink") {
+          const url = prompt("Enter URL:");
+          if (url) document.execCommand("createLink", false, url);
+          return;
+        }
+        document.execCommand(cmd, false, null);
+      });
+
+      form.addEventListener("submit", () => {
+        const blocks = [];
+        blocksContainer.querySelectorAll(".comment-block").forEach((block) => {
+          const type = block.dataset.blockType;
+          const textArea = block.querySelector(".comment-block-input");
+          const isRich = textArea && textArea.getAttribute("contenteditable") === "true";
+          const value = textArea
+            ? (isRich ? textArea.innerHTML.trim() : textArea.value.trim())
+            : "";
+          if (!value) return;
+
+          if (type === "code") {
+            const langInput = block.querySelector(".comment-code-language");
+            blocks.push({
+              type: "code",
+              value: {
+                language: langInput ? langInput.value.trim() : "",
+                code: value,
+              },
+            });
+          } else {
+            blocks.push({
+              type: "rich_text",
+              value: value,
+            });
+          }
+        });
+
+        jsonField.value = JSON.stringify(blocks);
+      });
+    })();
+  </script>
 {% endblock content %}

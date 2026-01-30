@@ -135,7 +135,13 @@ class Comment(ClusterableModel):
         on_delete=models.CASCADE,
         related_name="blog_comments",
     )
-    text = models.TextField(max_length=1000)
+    text = StreamField(
+        [
+            ("rich_text", RichTextBlock()),
+            ("code", CodeBlock()),
+        ],
+        blank=False,
+    )
     created = models.DateTimeField(auto_now_add=True)
     approved = models.BooleanField(
         default=False,

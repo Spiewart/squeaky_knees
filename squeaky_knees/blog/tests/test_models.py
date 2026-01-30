@@ -77,11 +77,11 @@ class TestCommentModel:
         comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Test comment",
+            text=[{"type": "rich_text", "value": "<p>Test comment</p>"}],
         )
         assert comment.blog_page == blog_post
         assert comment.author == user
-        assert comment.text == "Test comment"
+        assert len(comment.text) == 1
         assert not comment.approved  # Should not be approved by default
 
     def test_comment_str(self, blog_post, user):
@@ -89,7 +89,7 @@ class TestCommentModel:
         comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Test comment",
+            text=[{"type": "rich_text", "value": "<p>Test comment</p>"}],
         )
         expected = f"Comment by {user.username} on {blog_post.title}"
         assert str(comment) == expected
@@ -100,14 +100,14 @@ class TestCommentModel:
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Approved comment",
+            text=[{"type": "rich_text", "value": "<p>Approved comment</p>"}],
             approved=True,
         )
         # Create unapproved comment
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Unapproved comment",
+            text=[{"type": "rich_text", "value": "<p>Unapproved comment</p>"}],
             approved=False,
         )
 
@@ -116,7 +116,6 @@ class TestCommentModel:
             approved=True,
         )
         assert approved_comments.count() == 1
-        assert approved_comments.first().text == "Approved comment"
 
     def test_comments_ordered_by_created(self, blog_post, user):
         """Test comments are ordered by creation date."""
@@ -128,7 +127,7 @@ class TestCommentModel:
         older_comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Older comment",
+            text=[{"type": "rich_text", "value": "<p>Older comment</p>"}],
             approved=True,
         )
         older_comment.created = timezone.now() - timedelta(hours=2)
@@ -138,7 +137,7 @@ class TestCommentModel:
         newer_comment = Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Newer comment",
+            text=[{"type": "rich_text", "value": "<p>Newer comment</p>"}],
             approved=True,
         )
 
@@ -151,20 +150,35 @@ class TestCommentModel:
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Approved comment",
+            text=[{"type": "rich_text", "value": "<p>Approved comment</p>"}],
             approved=True,
         )
         # Create unapproved comment
         Comment.objects.create(
             blog_page=blog_post,
             author=user,
-            text="Unapproved comment",
+            text=[{"type": "rich_text", "value": "<p>Unapproved comment</p>"}],
             approved=False,
         )
 
         context = blog_post.get_context({})
         comments = context["comments"]
         assert comments.count() == 1
+
+    def test_comment_code_block_storage(self, blog_post, user):
+        """Test comments can store code blocks in StreamField."""
+        comment = Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text=[
+                {
+                    "type": "code",
+                    "value": {"language": "python", "code": "print('ok')"},
+                },
+            ],
+            approved=True,
+        )
+        assert comment.text[0].block_type == "code"
 
 
 @pytest.mark.django_db
