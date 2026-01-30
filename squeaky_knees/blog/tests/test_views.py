@@ -23,7 +23,10 @@ class TestBlogViews:
     def test_add_comment_requires_authentication(self, blog_post, client):
         """Test that adding a comment requires authentication."""
         url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
-        response = client.post(url, {"text": "Test comment"})
+        response = client.post(
+            url,
+            {"text": "Test comment"},
+        )
         # Should redirect to login
         assert response.status_code == 302
         assert "/accounts/login/" in response.url
@@ -32,7 +35,10 @@ class TestBlogViews:
         """Test authenticated user can add a comment."""
         client.force_login(user)
         url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
-        response = client.post(url, {"text": "Test comment"})
+        response = client.post(
+            url,
+            {"text": "Test comment"},
+        )
 
         # Should redirect back to blog post
         assert response.status_code == 302
@@ -94,3 +100,93 @@ class TestCommentForm:
         assert response.status_code == 200
         assert b"Log in" in response.content
         assert b"to leave a comment" in response.content
+
+
+@pytest.mark.django_db
+class TestModerateCommentsView:
+    """Tests for comment moderation view."""
+
+    def test_moderate_comments_requires_staff(self, client, user):
+        """Test that moderation page requires staff permissions."""
+        client.force_login(user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url)
+        # Should redirect to login or show forbidden
+        assert response.status_code == 302
+
+    def test_staff_can_access_moderation_page(self, client, admin_user):
+        """Test that staff users can access moderation page."""
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert b"Moderate Comments" in response.content
+
+    def test_moderation_page_shows_pending_comments(
+        self,
+        client,
+        admin_user,
+        blog_post,
+        user,
+    ):
+        """Test moderation page displays pending comments."""
+        # Create pending comment
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Pending comment",
+            approved=False,
+        )
+
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert b"Pending comment" in response.content
+
+    def test_staff_can_approve_comment(self, client, admin_user, blog_post, user):
+        """Test staff can approve a comment."""
+        comment = Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Test comment",
+            approved=False,
+        )
+
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.post(
+            url,
+            {"comment_id": comment.id, "action": "approve"},
+        )
+
+        assert response.status_code == 302
+        comment.refresh_from_db()
+        assert comment.approved
+
+    def test_staff_can_delete_comment(self, client, admin_user, blog_post, user):
+        """Test staff can delete a comment."""
+        comment = Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Test comment",
+            approved=False,
+        )
+
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.post(
+            url,
+            {"comment_id": comment.id, "action": "delete"},
+        )
+
+        assert response.status_code == 302
+        assert not Comment.objects.filter(id=comment.id).exists()
+
+    def test_moderation_page_empty_when_no_pending(self, client, admin_user):
+        """Test moderation page shows message when no pending comments."""
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert b"No pending comments" in response.content

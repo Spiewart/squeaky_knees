@@ -77,9 +77,10 @@ License: MIT
 2. Log in with your superuser credentials
 3. Navigate to **Pages** in the sidebar
 4. Create a **Blog Index Page** as a child of the home page
-5. Under the Blog Index Page, create **Blog Page** instances for individual posts
-6. Add featured images, tags, and rich content to your blog posts
-7. Publish your pages to make them visible on the site
+5. Add a site under settings > sites and nest under the Blog Index Page (ensures correct routing)
+6. Under the Blog Index Page, create **Blog Page** instances for individual posts
+7. Add featured images, tags, and rich content to your blog posts
+8. Publish your pages to make them visible on the site
 
 ### Managing Comments
 

@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 APPS_DIR = BASE_DIR / "squeaky_knees"
 env = environ.Env()
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
     env.read_env(str(BASE_DIR / ".env"))
@@ -79,6 +79,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_bootstrap5",
+    "django_recaptcha",
     "allauth",
     "allauth.account",
     "allauth.mfa",
@@ -230,6 +231,12 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
 X_FRAME_OPTIONS = "DENY"
+
+# reCAPTCHA v3
+# ------------------------------------------------------------------------------
+RECAPTCHA_USE_SSL = True
+RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_V3_SITE_KEY", default="")
+RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_V3_SECRET_KEY", default="")
 
 # EMAIL
 # ------------------------------------------------------------------------------

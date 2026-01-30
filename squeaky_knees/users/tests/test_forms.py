@@ -1,5 +1,6 @@
 """Module for all Form Tests."""
 
+from django.test import RequestFactory
 from django.utils.translation import gettext_lazy as _
 
 from squeaky_knees.users.forms import UserAdminCreationForm
@@ -33,3 +34,23 @@ class TestUserAdminCreationForm:
         assert len(form.errors) == 1
         assert "username" in form.errors
         assert form.errors["username"][0] == _("This username has already been taken.")
+
+
+class TestSignupRecaptchaForms:
+    """Tests for reCAPTCHA validation in signup forms."""
+
+    def test_user_signup_form_has_captcha_field(self, rf: RequestFactory):
+        """Test signup form includes reCAPTCHA field."""
+        from squeaky_knees.users.forms import UserSignupForm
+
+        request = rf.get("/accounts/signup/")
+        form = UserSignupForm(request=request)
+        assert "captcha" in form.fields
+
+    def test_social_signup_form_has_captcha_field(self, rf: RequestFactory):
+        """Test social signup form includes reCAPTCHA field."""
+        from squeaky_knees.users.forms import UserSocialSignupForm
+
+        request = rf.get("/accounts/social/signup/")
+        form = UserSocialSignupForm(request=request)
+        assert "captcha" in form.fields

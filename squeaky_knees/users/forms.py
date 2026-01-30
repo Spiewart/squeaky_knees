@@ -2,6 +2,8 @@ from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django.contrib.auth import forms as admin_forms
 from django.utils.translation import gettext_lazy as _
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
 
 from .models import User
 
@@ -31,6 +33,10 @@ class UserSignupForm(SignupForm):
     Check UserSocialSignupForm for accounts created from social.
     """
 
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV3(attrs={"data-action": "signup"}),
+    )
+
 
 class UserSocialSignupForm(SocialSignupForm):
     """
@@ -38,3 +44,7 @@ class UserSocialSignupForm(SocialSignupForm):
     Default fields will be added automatically.
     See UserSignupForm otherwise.
     """
+
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV3(attrs={"data-action": "social_signup"}),
+    )

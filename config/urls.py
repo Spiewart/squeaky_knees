@@ -31,10 +31,7 @@ urlpatterns = [
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
-]
-
-# Wagtail pages - should be last to catch all other URLs
-urlpatterns += [
+    # Wagtail pages - place at end to catch remaining URLs
     path("blog/", include(wagtail_urls)),
 ]
 

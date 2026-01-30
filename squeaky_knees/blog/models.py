@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey
+from modelcluster.models import ClusterableModel
 from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import InlinePanel
@@ -23,7 +24,14 @@ class BlogIndexPage(Page):
     def get_context(self, request):
         """Add blog posts to template context."""
         context = super().get_context(request)
-        blogpages = self.get_children().live().order_by("-first_published_at")
+        # Get all live child pages (BlogPages) that are direct children of this page
+        blogpages = (
+            self.get_children()
+            .live()
+            .type(BlogPage)
+            .specific()
+            .order_by("-blogpage__date")
+        )
         context["blogpages"] = blogpages
         return context
 
@@ -70,7 +78,6 @@ class BlogPage(Page):
         ),
         FieldPanel("intro"),
         FieldPanel("body"),
-        InlinePanel("comments", label="Comments"),
     ]
 
     def get_context(self, request):
@@ -78,12 +85,17 @@ class BlogPage(Page):
         from .forms import CommentForm
 
         context = super().get_context(request)
-        context["comments"] = self.comments.filter(approved=True).order_by("created")
+        # Get approved comments from the database
+        approved_comments = Comment.objects.filter(
+            blog_page=self,
+            approved=True,
+        ).order_by("created")
+        context["comments"] = approved_comments
         context["comment_form"] = CommentForm()
         return context
 
 
-class Comment(models.Model):
+class Comment(ClusterableModel):
     """Comments on blog posts."""
 
     blog_page = ParentalKey(

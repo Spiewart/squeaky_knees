@@ -189,4 +189,5 @@ dependencies = [
     "sentry-sdk==2.50.0",
     "wagtail==6.4.2",
     "django-taggit==6.1.0",
+    "django-recaptcha==4.0.0",
 ]

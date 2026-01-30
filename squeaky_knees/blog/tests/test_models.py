@@ -24,6 +24,47 @@ class TestBlogModels:
         assert "comments" in context
         assert "comment_form" in context
 
+    def test_blog_index_page_get_context_with_posts(self, blog_index, blog_post):
+        """Test blog index page context includes blog posts."""
+        context = blog_index.get_context({})
+        assert "blogpages" in context
+        blogpages = list(context["blogpages"])
+        assert len(blogpages) == 1
+        assert blogpages[0].title == "Test Blog Post"
+
+    def test_blog_index_page_get_context_ordered_by_date(self, blog_index):
+        """Test blog posts are ordered by date (newest first)."""
+        from datetime import date
+        from datetime import timedelta
+
+        from squeaky_knees.blog.models import BlogPage
+
+        # Create older post
+        older_post = BlogPage(
+            title="Older Post",
+            date=date.today() - timedelta(days=5),
+            intro="Older post",
+            slug="older-post",
+        )
+        blog_index.add_child(instance=older_post)
+        older_post.save_revision().publish()
+
+        # Create newer post
+        newer_post = BlogPage(
+            title="Newer Post",
+            date=date.today(),
+            intro="Newer post",
+            slug="newer-post",
+        )
+        blog_index.add_child(instance=newer_post)
+        newer_post.save_revision().publish()
+
+        context = blog_index.get_context({})
+        blogpages = list(context["blogpages"])
+        assert len(blogpages) == 2
+        assert blogpages[0].title == "Newer Post"
+        assert blogpages[1].title == "Older Post"
+
 
 @pytest.mark.django_db
 class TestCommentModel:
@@ -68,6 +109,58 @@ class TestCommentModel:
             approved=False,
         )
 
-        approved_comments = blog_post.comments.filter(approved=True)
+        approved_comments = Comment.objects.filter(
+            blog_page=blog_post,
+            approved=True,
+        )
         assert approved_comments.count() == 1
         assert approved_comments.first().text == "Approved comment"
+
+    def test_comments_ordered_by_created(self, blog_post, user):
+        """Test comments are ordered by creation date."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        # Create older comment
+        older_comment = Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Older comment",
+            approved=True,
+        )
+        older_comment.created = timezone.now() - timedelta(hours=2)
+        older_comment.save()
+
+        # Create newer comment
+        newer_comment = Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Newer comment",
+            approved=True,
+        )
+
+        comments = Comment.objects.filter(blog_page=blog_post).order_by("created")
+        assert list(comments) == [older_comment, newer_comment]
+
+    def test_blog_page_context_only_shows_approved_comments(self, blog_post, user):
+        """Test blog page context only includes approved comments."""
+        # Create approved comment
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Approved comment",
+            approved=True,
+        )
+        # Create unapproved comment
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text="Unapproved comment",
+            approved=False,
+        )
+
+        context = blog_post.get_context({})
+        comments = context["comments"]
+        assert comments.count() == 1
+        assert comments.first().text == "Approved comment"

@@ -1,7 +1,11 @@
 from .base import *  # noqa: F403
+from .base import BASE_DIR
 from .base import INSTALLED_APPS
 from .base import MIDDLEWARE
 from .base import env
+
+# Load .envs/.local/.django file for local development
+env.read_env(str(BASE_DIR / ".envs" / ".local" / ".django"))
 
 # GENERAL
 # ------------------------------------------------------------------------------
@@ -32,6 +36,12 @@ EMAIL_BACKEND = env(
     "DJANGO_EMAIL_BACKEND",
     default="django.core.mail.backends.console.EmailBackend",
 )
+
+# reCAPTCHA v3
+# ------------------------------------------------------------------------------
+# Keys are loaded from .envs/.local/.django
+# In local dev, these are Google's test keys that always validate
+SILENCED_SYSTEM_CHECKS = ["django_recaptcha.recaptcha_test_key_error"]
 
 # django-debug-toolbar
 # ------------------------------------------------------------------------------
