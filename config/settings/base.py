@@ -238,6 +238,11 @@ RECAPTCHA_USE_SSL = True
 RECAPTCHA_PUBLIC_KEY = env("RECAPTCHA_V3_SITE_KEY", default="")
 RECAPTCHA_PRIVATE_KEY = env("RECAPTCHA_V3_SECRET_KEY", default="")
 
+# FORMS
+# ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/5.2/releases/5.2/#forms
+FORMS_URLFIELD_ASSUME_HTTPS = True
+
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend

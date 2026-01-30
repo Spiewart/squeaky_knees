@@ -24,7 +24,11 @@
           {% endif %}
           <div class="lead">{{ page.intro }}</div>
           <hr />
-          <div class="blog-content">{{ page.body|richtext }}</div>
+          <div class="blog-content">
+            {% for block in page.body %}
+              {% include_block block %}
+            {% endfor %}
+          </div>
         </article>
         <hr class="my-5" />
         <!-- Comments Section -->

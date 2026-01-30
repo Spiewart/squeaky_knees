@@ -7,9 +7,30 @@ from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel
 from wagtail.admin.panels import InlinePanel
 from wagtail.admin.panels import MultiFieldPanel
+from wagtail.blocks import CharBlock
+from wagtail.blocks import RichTextBlock
+from wagtail.blocks import StructBlock
+from wagtail.blocks import TextBlock
 from wagtail.fields import RichTextField
+from wagtail.fields import StreamField
 from wagtail.models import Page
 from wagtail.search import index
+
+
+class CodeBlock(StructBlock):
+    """A dedicated code block for displaying code snippets."""
+
+    language = CharBlock(
+        max_length=50,
+        help_text="Programming language (e.g., python, javascript, html)",
+        required=False,
+    )
+    code = TextBlock(help_text="Your code here")
+
+    class Meta:
+        template = "blog/blocks/code_block.html"
+        icon = "code"
+        label = "Code"
 
 
 class BlogIndexPage(Page):
@@ -51,7 +72,13 @@ class BlogPage(Page):
 
     date = models.DateField("Post date")
     intro = models.CharField(max_length=250)
-    body = RichTextField(blank=True)
+    body = StreamField(
+        [
+            ("rich_text", RichTextBlock()),
+            ("code", CodeBlock()),
+        ],
+        blank=True,
+    )
     tags = ClusterTaggableManager(through=BlogPageTag, blank=True)
     header_image = models.ForeignKey(
         "wagtailimages.Image",

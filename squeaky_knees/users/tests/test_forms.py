@@ -39,18 +39,23 @@ class TestUserAdminCreationForm:
 class TestSignupRecaptchaForms:
     """Tests for reCAPTCHA validation in signup forms."""
 
-    def test_user_signup_form_has_captcha_field(self, rf: RequestFactory):
+    def test_user_signup_form_has_captcha_field(self):
         """Test signup form includes reCAPTCHA field."""
         from squeaky_knees.users.forms import UserSignupForm
 
-        request = rf.get("/accounts/signup/")
-        form = UserSignupForm(request=request)
-        assert "captcha" in form.fields
+        # Check that captcha is in declared_fields
+        assert "captcha" in UserSignupForm.declared_fields
+        # Verify it's a ReCaptchaField
+        from django_recaptcha.fields import ReCaptchaField
+        assert isinstance(UserSignupForm.declared_fields["captcha"], ReCaptchaField)
 
-    def test_social_signup_form_has_captcha_field(self, rf: RequestFactory):
+    def test_social_signup_form_has_captcha_field(self):
         """Test social signup form includes reCAPTCHA field."""
+        from django_recaptcha.fields import ReCaptchaField
+
         from squeaky_knees.users.forms import UserSocialSignupForm
 
-        request = rf.get("/accounts/social/signup/")
-        form = UserSocialSignupForm(request=request)
-        assert "captcha" in form.fields
+        # Check that captcha is in declared_fields
+        assert "captcha" in UserSocialSignupForm.declared_fields
+        # Verify it's a ReCaptchaField
+        assert isinstance(UserSocialSignupForm.declared_fields["captcha"], ReCaptchaField)

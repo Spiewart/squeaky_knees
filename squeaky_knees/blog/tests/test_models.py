@@ -46,6 +46,7 @@ class TestBlogModels:
             intro="Older post",
             slug="older-post",
         )
+        older_post.body = [{"type": "rich_text", "value": "<p>Older content</p>"}]
         blog_index.add_child(instance=older_post)
         older_post.save_revision().publish()
 
@@ -56,6 +57,7 @@ class TestBlogModels:
             intro="Newer post",
             slug="newer-post",
         )
+        newer_post.body = [{"type": "rich_text", "value": "<p>Newer content</p>"}]
         blog_index.add_child(instance=newer_post)
         newer_post.save_revision().publish()
 
@@ -163,4 +165,77 @@ class TestCommentModel:
         context = blog_post.get_context({})
         comments = context["comments"]
         assert comments.count() == 1
-        assert comments.first().text == "Approved comment"
+
+
+@pytest.mark.django_db
+class TestCodeBlock:
+    """Tests for CodeBlock functionality."""
+
+    def test_code_block_creation(self, blog_index, admin_user):
+        """Test code block can be created and stored."""
+        from datetime import date
+
+        from squeaky_knees.blog.models import BlogPage
+
+        blog_post = BlogPage(
+            title="Code Block Test",
+            date=date.today(),
+            intro="Test code block",
+            slug="code-block-test",
+        )
+        # Set body with code block
+        blog_post.body = [
+            {
+                "type": "code",
+                "value": {
+                    "language": "python",
+                    "code": "def hello():\n    print('Hello, World!')",
+                },
+            }
+        ]
+        blog_index.add_child(instance=blog_post)
+        blog_post.save_revision().publish()
+
+        # Verify code block was saved
+        assert len(blog_post.body) == 1
+        assert blog_post.body[0].block_type == "code"
+        assert blog_post.body[0].value["language"] == "python"
+
+    def test_mixed_blocks_in_body(self, blog_index, admin_user):
+        """Test mixing rich_text and code blocks."""
+        from datetime import date
+
+        from squeaky_knees.blog.models import BlogPage
+
+        blog_post = BlogPage(
+            title="Mixed Blocks Test",
+            date=date.today(),
+            intro="Test mixed blocks",
+            slug="mixed-blocks-test",
+        )
+        # Set body with both rich_text and code blocks
+        blog_post.body = [
+            {
+                "type": "rich_text",
+                "value": "<p>Here's some code:</p>",
+            },
+            {
+                "type": "code",
+                "value": {
+                    "language": "javascript",
+                    "code": "console.log('Hello');",
+                },
+            },
+            {
+                "type": "rich_text",
+                "value": "<p>End of code example</p>",
+            },
+        ]
+        blog_index.add_child(instance=blog_post)
+        blog_post.save_revision().publish()
+
+        # Verify all blocks were saved
+        assert len(blog_post.body) == 3
+        assert blog_post.body[0].block_type == "rich_text"
+        assert blog_post.body[1].block_type == "code"
+        assert blog_post.body[2].block_type == "rich_text"

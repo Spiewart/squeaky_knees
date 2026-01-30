@@ -9,6 +9,23 @@ from squeaky_knees.blog.models import BlogPage
 User = get_user_model()
 
 
+@pytest.fixture(autouse=True)
+def mock_recaptcha(monkeypatch):
+    """Mock reCAPTCHA validation for tests."""
+    from unittest.mock import MagicMock
+
+    # Mock the ReCaptchaField clean method to always pass
+    from django_recaptcha.fields import ReCaptchaField
+
+    original_clean = ReCaptchaField.clean
+
+    def mock_clean(self, value):
+        # In tests, skip validation and just return the value
+        return value
+
+    monkeypatch.setattr(ReCaptchaField, "clean", mock_clean)
+
+
 @pytest.fixture
 def user(db):
     """Create a test user."""
@@ -75,9 +92,15 @@ def blog_post(db, blog_index, admin_user):
         title="Test Blog Post",
         date=date.today(),
         intro="This is a test blog post",
-        body="<p>This is the body of the test post</p>",
         slug="test-blog-post",
     )
+    # Set body as StreamField with rich_text block
+    blog_post.body = [
+        {
+            "type": "rich_text",
+            "value": "<p>This is the body of the test post</p>",
+        }
+    ]
     blog_index.add_child(instance=blog_post)
     blog_post.save_revision().publish()
     return blog_post
