@@ -6,7 +6,6 @@ from modelcluster.fields import ParentalKey
 from modelcluster.models import ClusterableModel
 from taggit.models import TaggedItemBase
 from wagtail.admin.panels import FieldPanel
-from wagtail.admin.panels import InlinePanel
 from wagtail.admin.panels import MultiFieldPanel
 from wagtail.blocks import CharBlock
 from wagtail.blocks import RichTextBlock

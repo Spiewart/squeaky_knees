@@ -1,8 +1,5 @@
-"""Pytest configuration for tests."""
-
 import pytest
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from wagtail.models import Page
 from wagtail.models import Site
 
@@ -48,14 +45,19 @@ def admin_user(db):
 @pytest.fixture
 def blog_index(db):
     """Create a blog index page."""
+    # Get or create the default site
+
     site = Site.objects.filter(is_default_site=True).first()
     if not site:
+        # Get the root page (created by Wagtail)
         root = Page.objects.first()
         if not root:
+            # Create a root page if it doesn't exist
             from wagtail.models import Page as WagtailPage
 
             root = WagtailPage.add_root(title="Root", slug="root")
 
+        # Create default site
         site = Site.objects.create(
             hostname="localhost",
             port=80,
@@ -66,6 +68,7 @@ def blog_index(db):
     else:
         root = site.root_page
 
+    # Create blog index page
     blog_index = BlogIndexPage(
         title="Blog",
         intro="<p>Welcome to the blog</p>",
@@ -87,6 +90,7 @@ def blog_post(db, blog_index, admin_user):
         intro="This is a test blog post",
         slug="test-blog-post",
     )
+    # Set body as StreamField with rich_text block
     blog_post.body = [
         {
             "type": "rich_text",
@@ -96,12 +100,3 @@ def blog_post(db, blog_index, admin_user):
     blog_index.add_child(instance=blog_post)
     blog_post.save_revision().publish()
     return blog_post
-
-
-@pytest.fixture
-def clear_cache():
-    """Clear Django cache before each test."""
-    cache.clear()
-    yield
-    cache.clear()
-
