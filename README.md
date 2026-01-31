@@ -16,6 +16,7 @@ License: MIT
 - **Tags and Categories**: Organize blog posts with tags for easy discovery
 - **Comment System**: Registered users can leave comments on blog posts
 - **Comment Moderation**: Admin approval workflow for all comments before publication
+- **Nested Comment Threads**: Reply to comments with threaded discussions
 - **User Authentication**: Built-in user registration and authentication system
 
 ### Content Management
@@ -23,10 +24,25 @@ License: MIT
 - **Admin Interface**: Access the Wagtail admin at `/cms/` or Django admin at `/admin/`
 - **Media Management**: Upload and manage images through the Wagtail media library
 
+### Discovery and SEO
+- **Blog Search**: Dedicated search page with input sanitization
+- **Pagination**: Blog index supports page-based navigation
+- **RSS Feed**: Subscribe at `/feed.xml`
+- **Sitemap and Robots**: `/sitemap.xml` and `/robots.txt` for crawlers
+
 ### User Features
 - **User Registration**: Users can create accounts to participate in discussions
 - **Comment System**: Authenticated users can comment on blog posts
 - **Profile Management**: Users can manage their profiles and view their activity
+
+### Safety and Anti-Abuse
+- **reCAPTCHA v3**: Protected signup and comment submission
+- **Rate Limiting**: Limits on comment and signup actions
+- **Input Validation and Sanitization**: XSS-safe HTML handling and length checks
+- **Security Headers**: Protective headers on all responses
+- **Custom Error Pages**: Styled 403/404/500 templates
+- **Comment Notifications**: Email alerts for new comments and approvals
+- **Logging and Error Tracking**: Structured logging for app and security events
 
 ## Getting Started
 
@@ -51,10 +67,13 @@ License: MIT
    ```
 
 3. Set up environment variables:
-   ```bash
-   export DJANGO_SETTINGS_MODULE=config.settings.local
-   export DATABASE_URL=postgres://username:password@localhost:5432/squeaky_knees
-   ```
+   - Local defaults live in `.envs/.local/.django` and `.envs/.local/.postgres`
+   - Ensure `RECAPTCHA_V3_SITE_KEY` and `RECAPTCHA_V3_SECRET_KEY` are set
+   - If you prefer environment variables, you can also export:
+     ```bash
+     export DJANGO_SETTINGS_MODULE=config.settings.local
+     export DATABASE_URL=postgres://username:password@localhost:5432/squeaky_knees
+     ```
 
 4. Run migrations:
    ```bash
@@ -81,6 +100,15 @@ License: MIT
 6. Under the Blog Index Page, create **Blog Page** instances for individual posts
 7. Add featured images, tags, and rich content to your blog posts
 8. Publish your pages to make them visible on the site
+
+### Useful Endpoints
+
+- Home: `http://localhost:8000/`
+- Blog: `http://localhost:8000/blog/`
+- Blog search: `http://localhost:8000/blog/actions/search/`
+- RSS feed: `http://localhost:8000/feed.xml`
+- Sitemap: `http://localhost:8000/sitemap.xml`
+- Robots: `http://localhost:8000/robots.txt`
 
 ### Managing Comments
 

@@ -1,8 +1,10 @@
 import json
+from datetime import date
 
 import pytest
 from django.urls import reverse
 
+from squeaky_knees.blog.models import BlogPage
 from squeaky_knees.blog.models import Comment
 
 
@@ -116,6 +118,14 @@ class TestBlogViews:
         content = response.content
         assert b"language-python" in content
         assert b"print('ok')" in content or b"print(&#x27;ok&#x27;)" in content
+
+    def test_navbar_includes_search_form(self, client):
+        """Navbar should include blog search form."""
+        response = client.get(reverse("home"))
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert f'action="{reverse("blog:search")}"' in content
+        assert 'name="query"' in content
 
 
 @pytest.mark.django_db
@@ -231,3 +241,67 @@ class TestModerateCommentsView:
         response = client.get(url)
         assert response.status_code == 200
         assert b"No pending comments" in response.content
+
+    def test_moderation_search_filters_by_author(self, client, admin_user, blog_post, user, django_user_model):
+        """Moderation search should filter pending comments by author username."""
+        other_user = django_user_model.objects.create_user(
+            username="otheruser",
+            email="other@example.com",
+            password="pass123",
+        )
+
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text=[{"type": "rich_text", "value": "<p>Alpha pending</p>"}],
+            approved=False,
+        )
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=other_user,
+            text=[{"type": "rich_text", "value": "<p>Bravo pending</p>"}],
+            approved=False,
+        )
+
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url, {"query": "testuser"})
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Alpha pending" in content
+        assert "Bravo pending" not in content
+
+    def test_moderation_search_filters_by_blog_title(self, client, admin_user, blog_index, blog_post, user):
+        """Moderation search should filter pending comments by blog title."""
+        second_post = BlogPage(
+            title="Second Post",
+            date=date.today(),
+            intro="Second intro",
+            slug="second-post",
+        )
+        second_post.body = [
+            {"type": "rich_text", "value": "<p>Second body</p>"},
+        ]
+        blog_index.add_child(instance=second_post)
+        second_post.save_revision().publish()
+
+        Comment.objects.create(
+            blog_page=blog_post,
+            author=user,
+            text=[{"type": "rich_text", "value": "<p>First post comment</p>"}],
+            approved=False,
+        )
+        Comment.objects.create(
+            blog_page=second_post,
+            author=user,
+            text=[{"type": "rich_text", "value": "<p>Second post comment</p>"}],
+            approved=False,
+        )
+
+        client.force_login(admin_user)
+        url = reverse("blog:moderate_comments")
+        response = client.get(url, {"query": "Second Post"})
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Second post comment" in content
+        assert "First post comment" not in content

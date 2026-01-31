@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -58,6 +59,14 @@ def is_moderator(user):
 def moderate_comments(request):
     """View to moderate pending comments."""
     pending_comments = Comment.objects.filter(approved=False).order_by("-created")
+    query = request.GET.get("query", "").strip()
+
+    if query:
+        pending_comments = pending_comments.filter(
+            Q(author__username__icontains=query)
+            | Q(blog_page__title__icontains=query)
+            | Q(text__icontains=query)
+        )
 
     if request.method == "POST":
         comment_id = request.POST.get("comment_id")
@@ -79,6 +88,7 @@ def moderate_comments(request):
 
     context = {
         "pending_comments": pending_comments,
+        "query_string": query,
     }
     return render(request, "blog/moderate_comments.html", context)
 
