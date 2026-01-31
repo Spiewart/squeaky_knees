@@ -2,6 +2,7 @@
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from wagtail.models import Page
 from wagtail.models import Site
 
@@ -99,3 +100,12 @@ def blog_post(db, blog_index, admin_user):
     blog_index.add_child(instance=blog_post)
     blog_post.save_revision().publish()
     return blog_post
+
+
+@pytest.fixture
+def clear_cache():
+    """Clear Django cache before each test."""
+    cache.clear()
+    yield
+    cache.clear()
+

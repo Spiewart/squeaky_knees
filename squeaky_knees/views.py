@@ -1,6 +1,8 @@
-"""Views for sitemap, robots.txt, and RSS feed."""
+"""Views for sitemap, robots.txt, RSS feed, and health check."""
 
+from django.db import connection
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 
@@ -54,3 +56,26 @@ def rss_feed_view(request):
 
     xml_content = render_to_string("feed.xml", context)
     return HttpResponse(xml_content, content_type="application/rss+xml")
+
+
+def health_check(request):
+    """Health check endpoint that verifies app and database connectivity.
+    
+    Returns:
+        JSON response with status and database connection status.
+    """
+    try:
+        # Test database connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        
+        return JsonResponse({
+            "status": "ok",
+            "database": "connected",
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "database": "disconnected",
+            "error": str(e),
+        }, status=503)

@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 
+from config.ratelimit import is_rate_limited
+from .email import send_comment_notification
 from .forms import CommentForm
 from .models import BlogPage
 from .models import Comment
@@ -34,6 +36,9 @@ def add_comment(request, page_id):
                     pass
 
             comment.save()
+            # Send notification email to blog post owner
+            if blog_page.owner:
+                send_comment_notification(comment)
             messages.success(
                 request,
                 "Your comment has been submitted and is awaiting moderation.",
@@ -92,7 +97,14 @@ def moderate_comments(request):
     }
     return render(request, "blog/moderate_comments.html", context)
 
-
+# Rate limit search
+    if is_rate_limited(request, "blog_search", max_attempts=30, window_seconds=300):
+        return render(request, "blog/search_results.html", {
+            "error": "Too many search requests. Please wait a moment.",
+            "query_string": "",
+        })
+    
+    
 def search_blog(request):
     """Search blog posts by title, intro, and body content."""
     form = BlogSearchForm()

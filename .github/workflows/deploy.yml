@@ -1,0 +1,90 @@
+name: Deploy to DigitalOcean
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md']
+
+env:
+  REGISTRY: registry.digitalocean.com
+  IMAGE_NAME: squeaky-knees
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
+            -t ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            .
+
+      - name: Push image to DOCR
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Login to registry
+            docker login -u ${{ secrets.DO_TOKEN }} -p ${{ secrets.DO_TOKEN }} ${{ env.REGISTRY }}
+
+            # Pull latest image
+            docker pull ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+
+            # Stop and remove old container
+            docker stop squeaky-knees || true
+            docker rm squeaky-knees || true
+
+            # Run migrations
+            docker run --rm \
+              --env-file /opt/squeaky_knees/.env \
+              --network squeaky_knees_network \
+              ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
+              uv run python manage.py migrate --noinput
+
+            # Start new container
+            docker run -d \
+              --name squeaky-knees \
+              --restart unless-stopped \
+              --env-file /opt/squeaky_knees/.env \
+              --network squeaky_knees_network \
+              -p 8000:8000 \
+              ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+
+            # Clean up old images
+            docker image prune -af
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Wait for container to be healthy
+            sleep 5
+            docker ps | grep squeaky-knees || exit 1
+
+            # Check health endpoint with database verification
+            curl -f http://localhost:8000/health/ | grep -q '"status":"ok"' || exit 1
+            echo "Deployment verified: app is healthy"

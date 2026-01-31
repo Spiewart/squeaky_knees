@@ -103,28 +103,28 @@ class TestErrorTracking:
     def test_security_middleware_errors_logged(self, client):
         """Security-related errors should be tracked."""
         # Middleware should handle errors without crashing
-        response = client.get("/")
+        response = client.get("/blog/")
         # Should return successful response
         assert response.status_code in [200, 301, 302]
 
     def test_unhandled_exceptions_dont_crash_app(self, client):
         """Unhandled exceptions should not crash the application."""
         # The app should stay responsive
-        response1 = client.get("/")
+        response1 = client.get("/blog/")
         assert response1.status_code in [200, 301, 302]
 
         response2 = client.get("/nonexistent/")
         assert response2.status_code == 404
 
         # App should still be responsive
-        response3 = client.get("/")
+        response3 = client.get("/blog/")
         assert response3.status_code in [200, 301, 302]
 
     def test_rate_limit_errors_handled(self, client):
         """Rate limiting errors should be graceful."""
         # Multiple requests should not cause unhandled errors
         for i in range(5):
-            response = client.get("/")
+            response = client.get("/blog/")
             # Should get response (200 or similar)
             assert response.status_code in [200, 301, 302, 429]
 

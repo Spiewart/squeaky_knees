@@ -4,17 +4,19 @@ from django.contrib import admin
 from django.urls import include
 from django.urls import path
 from django.views import defaults as default_views
+from django.views.generic import RedirectView
 from django.views.generic import TemplateView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from squeaky_knees.views import health_check
 from squeaky_knees.views import robots_txt_view
 from squeaky_knees.views import rss_feed_view
 from squeaky_knees.views import sitemap_view
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
+    path("health/", health_check, name="health"),
     path(
         "about/",
         TemplateView.as_view(template_name="pages/about.html"),
