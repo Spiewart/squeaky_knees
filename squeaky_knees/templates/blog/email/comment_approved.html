@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { border-bottom: 2px solid #28a745; padding-bottom: 10px; }
+        .content { padding: 20px 0; }
+        .success-box { background-color: #d4edda; padding: 15px; border-left: 4px solid #28a745; margin: 15px 0; }
+        .footer { color: #999; font-size: 12px; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Your Comment Was Approved</h2>
+        </div>
+
+        <div class="content">
+            <p>Hello {{ author_name }},</p>
+
+            <div class="success-box">
+                <p>Great news! Your comment on the blog post <strong>"{{ blog_post_title }}"</strong> has been approved and is now visible to other readers.</p>
+            </div>
+
+            <p>
+                <a href="{{ post_url }}">View your comment on the blog</a>
+            </p>
+
+            <p>Thank you for engaging with our community!</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -8,6 +8,7 @@ from django.shortcuts import render
 from .forms import CommentForm
 from .models import BlogPage
 from .models import Comment
+from .search_forms import BlogSearchForm
 
 
 @login_required
@@ -16,11 +17,21 @@ def add_comment(request, page_id):
     blog_page = get_object_or_404(BlogPage, id=page_id)
 
     if request.method == "POST":
-        form = CommentForm(request.POST)
+        form = CommentForm(request.POST, request=request)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.blog_page = blog_page
             comment.author = request.user
+
+            # Handle nested comments (replies to other comments)
+            parent_id = request.POST.get('parent_id')
+            if parent_id:
+                try:
+                    parent_comment = Comment.objects.get(id=parent_id, blog_page=blog_page)
+                    comment.parent = parent_comment
+                except Comment.DoesNotExist:
+                    pass
+
             comment.save()
             messages.success(
                 request,
@@ -70,3 +81,26 @@ def moderate_comments(request):
         "pending_comments": pending_comments,
     }
     return render(request, "blog/moderate_comments.html", context)
+
+
+def search_blog(request):
+    """Search blog posts by title, intro, and body content."""
+    form = BlogSearchForm()
+    results = []
+    query_string = ""
+
+    if request.method == "GET" and request.GET.get("query"):
+        form = BlogSearchForm(request.GET)
+        if form.is_valid():
+            query_string = form.cleaned_data["query"]
+
+            # Search using Wagtail's search API
+            results = BlogPage.objects.live().search(query_string)
+
+    context = {
+        "form": form,
+        "results": results,
+        "query_string": query_string,
+        "result_count": len(results),
+    }
+    return render(request, "blog/search_results.html", context)

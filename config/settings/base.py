@@ -160,6 +160,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
+    "config.middleware.SecurityHeadersMiddleware",
 ]
 
 # STATIC

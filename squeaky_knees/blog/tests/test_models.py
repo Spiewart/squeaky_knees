@@ -1,4 +1,5 @@
 import pytest
+from django.test import RequestFactory
 
 from squeaky_knees.blog.models import Comment
 
@@ -20,13 +21,17 @@ class TestBlogModels:
 
     def test_blog_page_get_context(self, blog_post, client):
         """Test blog page context includes comments."""
-        context = blog_post.get_context({})
+        rf = RequestFactory()
+        request = rf.get("/")
+        context = blog_post.get_context(request)
         assert "comments" in context
         assert "comment_form" in context
 
     def test_blog_index_page_get_context_with_posts(self, blog_index, blog_post):
         """Test blog index page context includes blog posts."""
-        context = blog_index.get_context({})
+        rf = RequestFactory()
+        request = rf.get("/")
+        context = blog_index.get_context(request)
         assert "blogpages" in context
         blogpages = list(context["blogpages"])
         assert len(blogpages) == 1
@@ -61,7 +66,9 @@ class TestBlogModels:
         blog_index.add_child(instance=newer_post)
         newer_post.save_revision().publish()
 
-        context = blog_index.get_context({})
+        rf = RequestFactory()
+        request = rf.get("/")
+        context = blog_index.get_context(request)
         blogpages = list(context["blogpages"])
         assert len(blogpages) == 2
         assert blogpages[0].title == "Newer Post"

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block title %}Search Blog Posts{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h1 class="mb-4">Search Blog Posts</h1>
+
+      <!-- Search Form -->
+      <form method="get" class="mb-4">
+        <div class="input-group input-group-lg">
+          <input
+            type="text"
+            class="form-control"
+            name="query"
+            placeholder="Search blog posts..."
+            value="{{ query_string }}"
+            autocomplete="off"
+          />
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+        {% if form.query.errors %}
+          <div class="alert alert-danger mt-2">
+            {{ form.query.errors.0 }}
+          </div>
+        {% endif %}
+      </form>
+
+      <!-- Search Results -->
+      {% if query_string %}
+        <div class="alert alert-info">
+          Found <strong>{{ result_count }}</strong> result{{ result_count|pluralize }}
+          for "<strong>{{ query_string }}</strong>"
+        </div>
+
+        {% if results %}
+          <div class="search-results">
+            {% for result in results %}
+              <article class="card mb-3">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <a href="{{ result.url }}">{{ result.title }}</a>
+                  </h5>
+                  {% if result.blogpage.date %}
+                    <p class="text-muted small mb-2">
+                      Published <time datetime="{{ result.blogpage.date|date:'c' }}">
+                        {{ result.blogpage.date|date:'F j, Y' }}
+                      </time>
+                    </p>
+                  {% endif %}
+                  {% if result.blogpage.intro %}
+                    <p class="card-text">{{ result.blogpage.intro }}</p>
+                  {% endif %}
+                  <a href="{{ result.url }}" class="btn btn-sm btn-outline-primary">
+                    Read More &rarr;
+                  </a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            No blog posts found matching "<strong>{{ query_string }}</strong>".
+            Try a different search term.
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="alert alert-secondary">
+          Enter a search term above to find blog posts.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

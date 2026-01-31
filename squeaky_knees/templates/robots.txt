@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Sitemap: {{ site_url }}/sitemap.xml
+
+# Disallow admin and internal pages
+Disallow: /cms/
+Disallow: /admin/
+Disallow: /accounts/login
+Disallow: /accounts/signup
+
+# Disallow specific paths to reduce crawl burden
+Disallow: /search/
+Disallow: /api/

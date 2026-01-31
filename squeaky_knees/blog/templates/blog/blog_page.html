@@ -35,17 +35,9 @@
         <div class="comments-section">
           <h3>Comments</h3>
           {% if comments %}
+            {% comment %}Display nested comments recursively{% endcomment %}
             {% for comment in comments %}
-              <div class="card mb-3">
-                <div class="card-body">
-                  <h6 class="card-subtitle mb-2 text-muted">{{ comment.author.username }} - {{ comment.created|date:"F d, Y H:i" }}</h6>
-                  <div class="card-text">
-                    {% for block in comment.text %}
-                      {% include_block block %}
-                    {% endfor %}
-                  </div>
-                </div>
-              </div>
+              {% include "blog/includes/comment_thread.html" with comment=comment comment_form=comment_form %}
             {% endfor %}
           {% else %}
             <p>No comments yet. Be the first to comment!</p>
@@ -57,7 +49,10 @@
               {{ comment_form.text }}
               <div class="mb-3" id="comment-blocks">
                 <div class="comment-block" data-block-type="rich_text">
-                  <label class="form-label">Text</label>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <label class="form-label mb-0">Text</label>
+                    <button type="button" class="btn btn-sm btn-link text-danger remove-comment-block">Remove</button>
+                  </div>
                   <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Text formatting">
                     <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="bold"><strong>B</strong></button>
                     <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="italic"><em>I</em></button>
@@ -99,7 +94,10 @@
         wrapper.className = "comment-block";
         wrapper.dataset.blockType = "rich_text";
         wrapper.innerHTML = `
-          <label class="form-label">Text</label>
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="form-label mb-0">Text</label>
+            <button type="button" class="btn btn-sm btn-link text-danger remove-comment-block">Remove</button>
+          </div>
           <div class="btn-group btn-group-sm mb-2" role="group" aria-label="Text formatting">
             <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="bold"><strong>B</strong></button>
             <button type="button" class="btn btn-outline-secondary comment-format" data-cmd="italic"><em>I</em></button>
@@ -115,7 +113,10 @@
         wrapper.className = "comment-block";
         wrapper.dataset.blockType = "code";
         wrapper.innerHTML = `
-          <label class="form-label">Code</label>
+          <div class="d-flex justify-content-between align-items-center">
+            <label class="form-label mb-0">Code</label>
+            <button type="button" class="btn btn-sm btn-link text-danger remove-comment-block">Remove</button>
+          </div>
           <input type="text" class="form-control comment-code-language mb-2" placeholder="Language (e.g., python, javascript)">
           <textarea class="form-control comment-block-input" rows="6" placeholder="Paste code here..."></textarea>
         `;
@@ -143,6 +144,14 @@
           return;
         }
         document.execCommand(cmd, false, null);
+      });
+
+      form.addEventListener("click", (event) => {
+        const removeBtn = event.target.closest(".remove-comment-block");
+        if (!removeBtn) return;
+        event.preventDefault();
+        const block = removeBtn.closest(".comment-block");
+        if (block) block.remove();
       });
 
       form.addEventListener("submit", () => {

@@ -1,9 +1,12 @@
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from django.contrib.auth import forms as admin_forms
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
+
+from config.ratelimit import is_rate_limited
 
 from .models import User
 
@@ -36,6 +39,31 @@ class UserSignupForm(SignupForm):
     captcha = ReCaptchaField(
         widget=ReCaptchaV3(attrs={"data-action": "signup"}),
     )
+
+    # Rate limit: 5 signup attempts per 3600 seconds (1 hour) per IP
+    RATE_LIMIT_MAX_ATTEMPTS = 5
+    RATE_LIMIT_WINDOW_SECONDS = 3600
+
+    def __init__(self, *args, request=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+
+    def clean(self):
+        """Add rate limiting check to signup form."""
+        cleaned_data = super().clean()
+
+        # Check rate limiting before other validations
+        if self.request and is_rate_limited(
+            self.request,
+            "user_signup",
+            self.RATE_LIMIT_MAX_ATTEMPTS,
+            self.RATE_LIMIT_WINDOW_SECONDS,
+        ):
+            raise ValidationError(
+                "Too many signup attempts. Please try again in a few hours."
+            )
+
+        return cleaned_data
 
 
 class UserSocialSignupForm(SocialSignupForm):

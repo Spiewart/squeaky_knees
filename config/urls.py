@@ -9,6 +9,10 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from squeaky_knees.views import robots_txt_view
+from squeaky_knees.views import rss_feed_view
+from squeaky_knees.views import sitemap_view
+
 urlpatterns = [
     path("", TemplateView.as_view(template_name="pages/home.html"), name="home"),
     path(
@@ -16,6 +20,10 @@ urlpatterns = [
         TemplateView.as_view(template_name="pages/about.html"),
         name="about",
     ),
+    # Sitemap, robots.txt, and RSS feed
+    path("sitemap.xml", sitemap_view, name="sitemap"),
+    path("robots.txt", robots_txt_view, name="robots"),
+    path("feed.xml", rss_feed_view, name="rss_feed"),
     # Django Admin, use {% url 'admin:index' %}
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
