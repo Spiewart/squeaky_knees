@@ -57,7 +57,8 @@ jobs:
 
             # Run migrations
             docker run --rm \
-              --env-file /opt/squeaky_knees/.env \
+              --env-file /opt/squeaky_knees/.envs/.production/.django \
+              --env-file /opt/squeaky_knees/.envs/.production/.postgres \
               --network squeaky_knees_network \
               ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
               uv run python manage.py migrate --noinput
@@ -66,7 +67,8 @@ jobs:
             docker run -d \
               --name squeaky-knees \
               --restart unless-stopped \
-              --env-file /opt/squeaky_knees/.env \
+              --env-file /opt/squeaky_knees/.envs/.production/.django \
+              --env-file /opt/squeaky_knees/.envs/.production/.postgres \
               --network squeaky_knees_network \
               -p 8000:8000 \
               ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest

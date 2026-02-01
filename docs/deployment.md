@@ -62,28 +62,26 @@ docker run -d \
   postgres:16
 ```
 
-#### 4. Create Environment File
+#### 4. Create Environment Files
 
-Create `/opt/squeaky_knees/.env` with production settings:
+Create `/opt/squeaky_knees/.envs/.production/` directory with production settings:
 
 ```bash
-# Create directory
-mkdir -p /opt/squeaky_knees
+# Create directory structure matching project
+mkdir -p /opt/squeaky_knees/.envs/.production
 
-# Create .env file
-cat > /opt/squeaky_knees/.env << 'EOF'
-# Django
+# Create Django environment file
+cat > /opt/squeaky_knees/.envs/.production/.django << 'EOF'
+# Django Settings
 DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=<GENERATE_STRONG_SECRET_KEY>
 DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
 DJANGO_SECURE_SSL_REDIRECT=True
-
-# Database
-DATABASE_URL=postgres://squeaky_knees:<PASSWORD>@postgres:5432/squeaky_knees
+DJANGO_DEBUG=False
 
 # reCAPTCHA v3
-RECAPTCHA_V3_SITE_KEY=<YOUR_RECAPTCHA_SITE_KEY>
-RECAPTCHA_V3_SECRET_KEY=<YOUR_RECAPTCHA_SECRET_KEY>
+RECAPTCHA_PUBLIC_KEY=<YOUR_RECAPTCHA_SITE_KEY>
+RECAPTCHA_PRIVATE_KEY=<YOUR_RECAPTCHA_SECRET_KEY>
 
 # Email (example with Mailgun)
 DJANGO_DEFAULT_FROM_EMAIL=noreply@yourdomain.com
@@ -96,9 +94,25 @@ DJANGO_AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET>
 DJANGO_AWS_STORAGE_BUCKET_NAME=squeaky-knees-static
 EOF
 
-# Secure the file
-chmod 600 /opt/squeaky_knees/.env
+# Create PostgreSQL environment file
+cat > /opt/squeaky_knees/.envs/.production/.postgres << 'EOF'
+# PostgreSQL Database
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=squeaky_knees
+POSTGRES_USER=squeaky_knees
+POSTGRES_PASSWORD=<STRONG_PASSWORD_HERE>
+DATABASE_URL=postgres://squeaky_knees:<PASSWORD>@postgres:5432/squeaky_knees
+EOF
+
+# Secure the files
+chmod 600 /opt/squeaky_knees/.envs/.production/.django
+chmod 600 /opt/squeaky_knees/.envs/.production/.postgres
 ```
+
+**Note**: The project uses a nested `.envs` structure:
+- `.envs/.local/.django` and `.envs/.local/.postgres` for local development
+- `.envs/.production/.django` and `.envs/.production/.postgres` for production
 
 #### 5. Set Up Nginx (Reverse Proxy)
 
@@ -181,7 +195,8 @@ docker rm squeaky-knees
 
 # Run migrations
 docker run --rm \
-  --env-file /opt/squeaky_knees/.env \
+  --env-file /opt/squeaky_knees/.envs/.production/.django \
+  --env-file /opt/squeaky_knees/.envs/.production/.postgres \
   --network squeaky_knees_network \
   registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest \
   uv run python manage.py migrate --noinput
@@ -190,7 +205,8 @@ docker run --rm \
 docker run -d \
   --name squeaky-knees \
   --restart unless-stopped \
-  --env-file /opt/squeaky_knees/.env \
+  --env-file /opt/squeaky_knees/.envs/.production/.django \
+  --env-file /opt/squeaky_knees/.envs/.production/.postgres \
   --network squeaky_knees_network \
   -p 8000:8000 \
   registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest
@@ -259,7 +275,7 @@ docker volume prune -f
 - [ ] Firewall configured (only ports 80, 443, 22)
 - [ ] SSH key authentication only (disable password auth)
 - [ ] Regular security updates (`apt-get update && apt-get upgrade`)
-- [ ] Environment file permissions restricted (`chmod 600`)
+- [ ] Environment file permissions restricted (`chmod 600 .envs/.production/*`)
 - [ ] reCAPTCHA keys configured
 - [ ] Email service configured for notifications
 
