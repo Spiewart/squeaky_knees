@@ -8,7 +8,6 @@
     <div class="row">
       <div class="col-lg-8 mx-auto">
         <h1>Moderate Comments</h1>
-
         <form method="get" class="my-3" role="search">
           <div class="input-group">
             <input type="text"
@@ -19,25 +18,24 @@
                    autocomplete="off" />
             <button class="btn btn-outline-primary" type="submit">Search</button>
             {% if query_string %}
-              <a class="btn btn-outline-secondary" href="{% url 'blog:moderate_comments' %}">Clear</a>
+              <a class="btn btn-outline-secondary"
+                 href="{% url 'blog:moderate_comments' %}">Clear</a>
             {% endif %}
           </div>
-          {% if query_string %}
-            <p class="text-muted mt-2 mb-0">
-              Showing results for "{{ query_string }}".
-            </p>
-          {% endif %}
+          {% if query_string %}<p class="text-muted mt-2 mb-0">Showing results for "{{ query_string }}".</p>{% endif %}
         </form>
-
         {% if messages %}
           {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
               {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              <button type="button"
+                      class="btn-close"
+                      data-bs-dismiss="alert"
+                      aria-label="Close"></button>
             </div>
           {% endfor %}
         {% endif %}
-
         {% if pending_comments %}
           <div class="table-responsive">
             <table class="table table-hover">
@@ -53,11 +51,11 @@
               <tbody>
                 {% for comment in pending_comments %}
                   <tr>
-                    <td><strong>{{ comment.author.username }}</strong></td>
                     <td>
-                      <a href="{{ comment.blog_page.url }}" target="_blank">
-                        {{ comment.blog_page.title }}
-                      </a>
+                      <strong>{{ comment.author.username }}</strong>
+                    </td>
+                    <td>
+                      <a href="{{ comment.blog_page.url }}" target="_blank">{{ comment.blog_page.title }}</a>
                     </td>
                     <td>
                       <small>{{ comment.text|truncatewords:20 }}</small>
@@ -69,8 +67,15 @@
                       <form method="post" class="d-inline">
                         {% csrf_token %}
                         <input type="hidden" name="comment_id" value="{{ comment.id }}" />
-                        <button type="submit" name="action" value="approve" class="btn btn-sm btn-success">Approve</button>
-                        <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger" onclick="return confirm('Delete this comment?')">Delete</button>
+                        <button type="submit"
+                                name="action"
+                                value="approve"
+                                class="btn btn-sm btn-success">Approve</button>
+                        <button type="submit"
+                                name="action"
+                                value="delete"
+                                class="btn btn-sm btn-danger"
+                                onclick="return confirm('Delete this comment?')">Delete</button>
                       </form>
                     </td>
                   </tr>

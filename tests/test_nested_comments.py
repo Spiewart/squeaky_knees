@@ -1,7 +1,6 @@
 """Tests for nested comments feature."""
 
 import pytest
-from django.test import RequestFactory
 
 from squeaky_knees.blog.models import Comment
 
@@ -224,7 +223,9 @@ class TestNestedComments:
         assert unapproved_reply not in replies
 
     def test_get_all_replies_includes_unapproved_when_requested(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """get_all_replies should include unapproved when requested."""
         parent = Comment.objects.create(
@@ -429,12 +430,16 @@ class TestNestedComments:
         assert approved in approved_replies
         assert unapproved not in approved_replies
 
+
 @pytest.mark.django_db
 class TestNestedCommentsTemplateRendering:
     """Tests for nested comments template rendering."""
 
     def test_blog_page_context_includes_only_top_level_comments(
-        self, client, blog_post, user
+        self,
+        client,
+        blog_post,
+        user,
     ):
         """Blog page context should include only top-level comments."""
         # Create top-level comment

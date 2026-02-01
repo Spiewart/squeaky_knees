@@ -3,8 +3,6 @@
 import pytest
 from django.conf import settings
 from django.core import mail
-from django.test import RequestFactory
-from django.test import TestCase
 
 from squeaky_knees.blog.email import send_comment_approval_notification
 from squeaky_knees.blog.email import send_comment_notification
@@ -34,7 +32,9 @@ class TestCommentNotificationEmails:
         assert len(mail.outbox) == 1
 
     def test_send_comment_notification_returns_false_without_author_email(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """send_comment_notification should return False if post has no owner."""
         # Don't set post owner
@@ -51,7 +51,9 @@ class TestCommentNotificationEmails:
         assert len(mail.outbox) == 0
 
     def test_send_comment_notification_includes_blog_post_title(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email subject should include blog post title."""
         blog_post.owner = user
@@ -174,7 +176,10 @@ class TestCommentNotificationEmails:
             blog_page=blog_post,
             author=user,
             text=[
-                {"type": "code", "value": {"code": "print('hello')", "language": "python"}}
+                {
+                    "type": "code",
+                    "value": {"code": "print('hello')", "language": "python"},
+                },
             ],
         )
 
@@ -204,7 +209,9 @@ class TestCommentApprovalEmails:
         assert len(mail.outbox) == 1
 
     def test_send_comment_approval_notification_returns_false_without_email(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """send_comment_approval_notification should return False if author has no email."""
         user.email = ""
@@ -223,7 +230,9 @@ class TestCommentApprovalEmails:
         assert len(mail.outbox) == 0
 
     def test_send_comment_approval_notification_email_to_author(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email should be sent to comment author."""
         comment = Comment.objects.create(
@@ -239,7 +248,9 @@ class TestCommentApprovalEmails:
         assert user.email in mail.outbox[0].to
 
     def test_send_comment_approval_notification_includes_author_name(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email body should include author name."""
         comment = Comment.objects.create(
@@ -256,7 +267,9 @@ class TestCommentApprovalEmails:
         assert user.username in email_content
 
     def test_send_comment_approval_notification_includes_post_title(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email subject should include blog post title."""
         comment = Comment.objects.create(
@@ -272,7 +285,9 @@ class TestCommentApprovalEmails:
         assert blog_post.title in mail.outbox[0].subject
 
     def test_send_comment_approval_notification_subject_mentions_approval(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email subject should mention approval."""
         comment = Comment.objects.create(
@@ -302,7 +317,9 @@ class TestCommentApprovalEmails:
         assert mail.outbox[0].alternatives
 
     def test_send_comment_approval_notification_includes_post_url(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email should include link to the blog post."""
         comment = Comment.objects.create(
@@ -319,7 +336,9 @@ class TestCommentApprovalEmails:
         assert "blog" in email_content.lower()
 
     def test_send_comment_approval_notification_handles_exception(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """send_comment_approval_notification should return False on error."""
         comment = Comment.objects.create(
@@ -343,7 +362,9 @@ class TestCommentApprovalEmails:
             email_module.send_mail = original_send_mail
 
     def test_send_comment_approval_notification_from_default_email(
-        self, blog_post, user
+        self,
+        blog_post,
+        user,
     ):
         """Email should be from DEFAULT_FROM_EMAIL."""
         comment = Comment.objects.create(

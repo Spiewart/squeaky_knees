@@ -2,8 +2,6 @@
 
 from django import forms
 
-from config.validation import validate_username
-
 
 class BlogSearchForm(forms.Form):
     """Form for searching blog posts."""
@@ -16,7 +14,7 @@ class BlogSearchForm(forms.Form):
                 "placeholder": "Search blog posts...",
                 "class": "form-control",
                 "autocomplete": "off",
-            }
+            },
         ),
     )
 
@@ -34,6 +32,8 @@ class BlogSearchForm(forms.Form):
             raise forms.ValidationError("Search query cannot exceed 200 characters.")
 
         # Remove potentially harmful characters
-        query = query.replace("<", "").replace(">", "").replace('"', "").replace("'", "")
+        query = (
+            query.replace("<", "").replace(">", "").replace('"', "").replace("'", "")
+        )
 
         return query

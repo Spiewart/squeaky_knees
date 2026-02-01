@@ -56,7 +56,7 @@ class CommentForm(forms.ModelForm):
             self.RATE_LIMIT_WINDOW_SECONDS,
         ):
             raise forms.ValidationError(
-                "You are posting comments too frequently. Please try again in a few minutes."
+                "You are posting comments too frequently. Please try again in a few minutes.",
             )
 
         text_input = self.cleaned_data.get("text")
@@ -90,7 +90,7 @@ class CommentForm(forms.ModelForm):
             {
                 "type": "rich_text",
                 "value": f"<p>{escape(str(text_input))}</p>",
-            }
+            },
         ]
         # Validate fallback blocks
         is_valid, error_msg = validate_comment_length(blocks)

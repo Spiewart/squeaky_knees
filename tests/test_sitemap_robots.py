@@ -1,8 +1,6 @@
 """Tests for sitemap and robots.txt functionality."""
 
 import pytest
-from django.test import Client
-from django.urls import reverse
 
 
 @pytest.mark.django_db
@@ -23,13 +21,18 @@ class TestSitemapGeneration:
         """Sitemap should include published blog posts."""
         response = client.get("/sitemap.xml")
         assert response.status_code == 200
-        assert blog_post.title.encode() in response.content or b"blog" in response.content
+        assert (
+            blog_post.title.encode() in response.content or b"blog" in response.content
+        )
 
     def test_sitemap_includes_blog_index(self, client, blog_index):
         """Sitemap should include blog index page."""
         response = client.get("/sitemap.xml")
         assert response.status_code == 200
-        assert b"sitemap" in response.content.lower() or b"blog" in response.content.lower()
+        assert (
+            b"sitemap" in response.content.lower()
+            or b"blog" in response.content.lower()
+        )
 
     def test_sitemap_xml_valid_format(self, client):
         """Sitemap should be valid XML."""
@@ -68,7 +71,10 @@ class TestRobotsTxt:
         """robots.txt should have Disallow directive."""
         response = client.get("/robots.txt")
         # Should have at least one directive (allow all, or specific disallows)
-        assert b"allow" in response.content.lower() or b"disallow" in response.content.lower()
+        assert (
+            b"allow" in response.content.lower()
+            or b"disallow" in response.content.lower()
+        )
 
     def test_robots_txt_mentions_sitemap(self, client):
         """robots.txt should mention sitemap location."""
@@ -149,7 +155,7 @@ class TestSitemapAndRobotsIntegration:
 
         # Create a blog post with special characters in title
         post = BlogPage(
-            title="Post & Title <with> Special \"Characters\"",
+            title='Post & Title <with> Special "Characters"',
             date=date.today(),
             intro="Post with special chars",
             slug="special-post",

@@ -37,7 +37,11 @@ class TestSecurityHeadersMiddleware:
         # 404 pages may be caught by Django before our middleware,
         # but we should verify they have the headers if they're processed by it
 
-    def test_security_headers_on_authenticated_view(self, client_with_middleware, django_user_model):
+    def test_security_headers_on_authenticated_view(
+        self,
+        client_with_middleware,
+        django_user_model,
+    ):
         """Security headers should be set on authenticated views."""
         user = django_user_model.objects.create_user(
             username="testuser",
@@ -52,11 +56,18 @@ class TestSecurityHeadersMiddleware:
     def test_all_required_security_headers_present(self, client_with_middleware):
         """All required security headers should be present."""
         response = client_with_middleware.get("/")
-        required_headers = ["X-Content-Type-Options", "X-XSS-Protection", "X-Frame-Options"]
+        required_headers = [
+            "X-Content-Type-Options",
+            "X-XSS-Protection",
+            "X-Frame-Options",
+        ]
         for header in required_headers:
             assert header in response, f"Missing security header: {header}"
 
-    def test_security_headers_not_overwritten_if_already_set(self, client_with_middleware):
+    def test_security_headers_not_overwritten_if_already_set(
+        self,
+        client_with_middleware,
+    ):
         """If X-Frame-Options is already set, middleware should not overwrite it."""
         # This test verifies the defensive logic in the middleware
         response = client_with_middleware.get("/")

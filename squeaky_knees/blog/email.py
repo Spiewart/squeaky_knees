@@ -3,7 +3,6 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.urls import reverse
 
 
 def send_comment_notification(comment):
@@ -18,7 +17,7 @@ def send_comment_notification(comment):
 
     # Get blog post author
     author_email = None
-    if hasattr(blog_post, 'owner') and blog_post.owner:
+    if hasattr(blog_post, "owner") and blog_post.owner:
         author_email = blog_post.owner.email
 
     if not author_email:
@@ -27,16 +26,18 @@ def send_comment_notification(comment):
 
     # Create context for email
     context = {
-        'blog_post_title': blog_post.title,
-        'comment_author': comment.author.username if comment.author else 'Anonymous',
-        'comment_text': comment.text,
-        'post_url': blog_post.url,
-        'admin_url': settings.SITE_URL if hasattr(settings, 'SITE_URL') else 'http://localhost:8000',
+        "blog_post_title": blog_post.title,
+        "comment_author": comment.author.username if comment.author else "Anonymous",
+        "comment_text": comment.text,
+        "post_url": blog_post.url,
+        "admin_url": settings.SITE_URL
+        if hasattr(settings, "SITE_URL")
+        else "http://localhost:8000",
     }
 
     # Render email subject and body
     subject = f"New comment on: {blog_post.title}"
-    html_message = render_to_string('blog/email/comment_notification.html', context)
+    html_message = render_to_string("blog/email/comment_notification.html", context)
 
     # Send email to post author
     try:
@@ -64,13 +65,13 @@ def send_comment_approval_notification(comment):
     blog_post = comment.blog_page
 
     context = {
-        'blog_post_title': blog_post.title,
-        'author_name': comment.author.username,
-        'post_url': blog_post.url,
+        "blog_post_title": blog_post.title,
+        "author_name": comment.author.username,
+        "post_url": blog_post.url,
     }
 
     subject = f"Your comment on '{blog_post.title}' was approved"
-    html_message = render_to_string('blog/email/comment_approved.html', context)
+    html_message = render_to_string("blog/email/comment_approved.html", context)
 
     try:
         send_mail(

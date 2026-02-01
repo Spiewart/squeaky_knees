@@ -9,8 +9,8 @@ def get_client_ip(request: HttpRequest) -> str:
 
     Respects X-Forwarded-For header for proxied requests.
     """
-    if request.META.get("HTTP_X_FORWARDED_FOR"):
-        return request.META["HTTP_X_FORWARDED_FOR"].split(",")[0].strip()
+    if request.headers.get("x-forwarded-for"):
+        return request.headers["x-forwarded-for"].split(",")[0].strip()
     return request.META.get("REMOTE_ADDR", "unknown")
 
 
@@ -22,7 +22,12 @@ def get_identifier_for_user_action(request: HttpRequest, action: str) -> str:
     return f"ratelimit:{action}:ip:{ip}"
 
 
-def is_rate_limited(request: HttpRequest, action: str, max_attempts: int, window_seconds: int) -> bool:
+def is_rate_limited(
+    request: HttpRequest,
+    action: str,
+    max_attempts: int,
+    window_seconds: int,
+) -> bool:
     """Check if a request exceeds rate limit.
 
     Args:

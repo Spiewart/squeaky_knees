@@ -4,7 +4,8 @@ from datetime import date
 import pytest
 from django.urls import reverse
 
-from squeaky_knees.blog.models import BlogPage, Comment
+from squeaky_knees.blog.models import BlogPage
+from squeaky_knees.blog.models import Comment
 
 
 @pytest.mark.django_db
@@ -241,7 +242,14 @@ class TestModerateCommentsView:
         assert response.status_code == 200
         assert b"No pending comments" in response.content
 
-    def test_moderation_search_filters_by_author(self, client, admin_user, blog_post, user, django_user_model):
+    def test_moderation_search_filters_by_author(
+        self,
+        client,
+        admin_user,
+        blog_post,
+        user,
+        django_user_model,
+    ):
         """Moderation search should filter pending comments by author username."""
         other_user = django_user_model.objects.create_user(
             username="otheruser",
@@ -270,7 +278,14 @@ class TestModerateCommentsView:
         assert "Alpha pending" in content
         assert "Bravo pending" not in content
 
-    def test_moderation_search_filters_by_blog_title(self, client, admin_user, blog_index, blog_post, user):
+    def test_moderation_search_filters_by_blog_title(
+        self,
+        client,
+        admin_user,
+        blog_index,
+        blog_post,
+        user,
+    ):
         """Moderation search should filter pending comments by blog title."""
         second_post = BlogPage(
             title="Second Post",
@@ -317,7 +332,12 @@ class TestEmptyBlogIndex:
         content = response.content.decode()
         assert "No blog posts yet" in content
 
-    def test_blog_index_with_posts_hides_empty_message(self, blog_index, blog_post, client):
+    def test_blog_index_with_posts_hides_empty_message(
+        self,
+        blog_index,
+        blog_post,
+        client,
+    ):
         """Blog index should not show empty message when posts exist."""
         response = client.get(blog_index.url)
         assert response.status_code == 200

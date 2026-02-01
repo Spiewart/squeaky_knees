@@ -1,8 +1,10 @@
 import pytest
 from django.contrib.auth import get_user_model
-from wagtail.models import Page, Site
+from wagtail.models import Page
+from wagtail.models import Site
 
-from squeaky_knees.blog.models import BlogIndexPage, BlogPage
+from squeaky_knees.blog.models import BlogIndexPage
+from squeaky_knees.blog.models import BlogPage
 
 User = get_user_model()
 
@@ -93,7 +95,7 @@ def blog_post(db, blog_index, admin_user):
         {
             "type": "rich_text",
             "value": "<p>This is the body of the test post</p>",
-        }
+        },
     ]
     blog_index.add_child(instance=blog_post)
     blog_post.save_revision().publish()

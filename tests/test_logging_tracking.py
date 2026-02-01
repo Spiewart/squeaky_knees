@@ -3,7 +3,6 @@
 import logging
 
 import pytest
-from django.test import Client, override_settings
 
 
 @pytest.mark.django_db
@@ -86,7 +85,6 @@ class TestErrorTracking:
 
     def test_error_tracking_middleware_exists(self):
         """Error tracking should be integrated (or configurable)."""
-        from django.conf import settings
 
         # Either error tracking is enabled or there's no hard requirement
         # Tests should verify that the app gracefully handles errors
@@ -150,8 +148,6 @@ class TestErrorTracking:
     def test_logging_configuration_valid(self):
         """Logging configuration should be valid."""
         import logging
-
-        from django.conf import settings
 
         # Should be able to get any logger
         logger = logging.getLogger("test")

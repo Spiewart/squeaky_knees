@@ -1,7 +1,6 @@
 """Tests for endpoint rate limiting."""
 
 import pytest
-from django.test import Client
 from django.urls import reverse
 
 from config.ratelimit import is_rate_limited
@@ -34,7 +33,12 @@ class TestSearchRateLimiting:
         request = rf.get("/blog/actions/search/?query=final")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
         request.user = None
-        result = is_rate_limited(request, "blog_search", max_attempts=30, window_seconds=300)
+        result = is_rate_limited(
+            request,
+            "blog_search",
+            max_attempts=30,
+            window_seconds=300,
+        )
         assert result is True
 
 
@@ -56,6 +60,7 @@ class TestCommentRateLimiting:
         # The 11th comment should be blocked or rate limited
         # This depends on how the rate limiter integrates with the form
         from squeaky_knees.blog.models import Comment
+
         comment_count = Comment.objects.filter(author=user).count()
         assert comment_count >= 10  # Should have created at least 10 comments
 

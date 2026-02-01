@@ -1,13 +1,17 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect
+from django.shortcuts import render
 
 from config.ratelimit import is_rate_limited
 
 from .email import send_comment_notification
 from .forms import CommentForm
-from .models import BlogPage, Comment
+from .models import BlogPage
+from .models import Comment
 from .search_forms import BlogSearchForm
 
 
@@ -24,10 +28,13 @@ def add_comment(request, page_id):
             comment.author = request.user
 
             # Handle nested comments (replies to other comments)
-            parent_id = request.POST.get('parent_id')
+            parent_id = request.POST.get("parent_id")
             if parent_id:
                 try:
-                    parent_comment = Comment.objects.get(id=parent_id, blog_page=blog_page)
+                    parent_comment = Comment.objects.get(
+                        id=parent_id,
+                        blog_page=blog_page,
+                    )
                     comment.parent = parent_comment
                 except Comment.DoesNotExist:
                     pass
@@ -43,6 +50,7 @@ def add_comment(request, page_id):
         else:
             # Log form errors for debugging
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Comment form errors: {form.errors}")
             messages.error(
@@ -67,7 +75,7 @@ def moderate_comments(request):
         pending_comments = pending_comments.filter(
             Q(author__username__icontains=query)
             | Q(blog_page__title__icontains=query)
-            | Q(text__icontains=query)
+            | Q(text__icontains=query),
         )
 
     if request.method == "POST":
@@ -79,10 +87,10 @@ def moderate_comments(request):
             if action == "approve":
                 comment.approved = True
                 comment.save()
-                messages.success(request, f"Comment approved.")
+                messages.success(request, "Comment approved.")
             elif action == "delete":
                 comment.delete()
-                messages.success(request, f"Comment deleted.")
+                messages.success(request, "Comment deleted.")
         except Comment.DoesNotExist:
             messages.error(request, "Comment not found.")
 
@@ -94,12 +102,16 @@ def moderate_comments(request):
     }
     return render(request, "blog/moderate_comments.html", context)
 
-# Rate limit search
+    # Rate limit search
     if is_rate_limited(request, "blog_search", max_attempts=30, window_seconds=300):
-        return render(request, "blog/search_results.html", {
-            "error": "Too many search requests. Please wait a moment.",
-            "query_string": "",
-        })
+        return render(
+            request,
+            "blog/search_results.html",
+            {
+                "error": "Too many search requests. Please wait a moment.",
+                "query_string": "",
+            },
+        )
 
 
 def search_blog(request):

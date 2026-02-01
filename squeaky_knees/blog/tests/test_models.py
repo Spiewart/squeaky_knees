@@ -212,7 +212,7 @@ class TestCodeBlock:
                     "language": "python",
                     "code": "def hello():\n    print('Hello, World!')",
                 },
-            }
+            },
         ]
         blog_index.add_child(instance=blog_post)
         blog_post.save_revision().publish()

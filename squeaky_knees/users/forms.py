@@ -60,7 +60,7 @@ class UserSignupForm(SignupForm):
             self.RATE_LIMIT_WINDOW_SECONDS,
         ):
             raise ValidationError(
-                "Too many signup attempts. Please try again in a few hours."
+                "Too many signup attempts. Please try again in a few hours.",
             )
 
         return cleaned_data

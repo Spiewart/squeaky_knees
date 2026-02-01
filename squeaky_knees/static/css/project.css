@@ -44,3 +44,26 @@ pre code {
   background-color: #f2dede;
   border-color: #eed3d7;
 }
+
+/* Comment thread styles */
+.comment-card {
+  border-left: 4px solid #dee2e6;
+}
+
+.comment-timestamp {
+  font-size: 0.85rem;
+}
+
+.comment-block-input {
+  min-height: 120px;
+}
+
+.reply-block-input {
+  min-height: 100px;
+}
+
+.reply-form-hidden {
+  display: none;
+  border-left: 3px solid #e9ecef;
+  padding-left: 0.75rem;
+}

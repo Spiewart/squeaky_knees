@@ -1,7 +1,5 @@
 """Tests for input validation and sanitization."""
 
-import pytest
-
 from config.validation import sanitize_html
 from config.validation import sanitize_streamfield_blocks
 from config.validation import validate_comment_length
@@ -22,7 +20,7 @@ class TestHtmlSanitization:
 
     def test_sanitize_html_removes_event_handlers(self):
         """Event handlers should be removed."""
-        dirty = '<p onclick="alert(\'xss\')">Click me</p>'
+        dirty = "<p onclick=\"alert('xss')\">Click me</p>"
         clean = sanitize_html(dirty)
         assert "onclick" not in clean
         assert "alert" not in clean
@@ -36,7 +34,9 @@ class TestHtmlSanitization:
 
     def test_sanitize_html_removes_style_tags(self):
         """Style tags should be removed."""
-        dirty = "<style>body { background: url('javascript:alert()'); }</style><p>Text</p>"
+        dirty = (
+            "<style>body { background: url('javascript:alert()'); }</style><p>Text</p>"
+        )
         clean = sanitize_html(dirty)
         assert "<style>" not in clean
 
@@ -90,7 +90,10 @@ class TestCommentLengthValidation:
     def test_validate_comment_length_code_block(self):
         """Code blocks should be included in length."""
         blocks = [
-            {"type": "code", "value": {"content": "print('hello')", "language": "python"}},
+            {
+                "type": "code",
+                "value": {"content": "print('hello')", "language": "python"},
+            },
         ]
         is_valid, error = validate_comment_length(blocks)
         assert is_valid is True
@@ -228,7 +231,10 @@ class TestStreamFieldSanitization:
         """Valid blocks should pass through sanitized."""
         blocks = [
             {"type": "rich_text", "value": "<p>Hello</p>"},
-            {"type": "code", "value": {"content": "print('test')", "language": "python"}},
+            {
+                "type": "code",
+                "value": {"content": "print('test')", "language": "python"},
+            },
         ]
         sanitized, errors = sanitize_streamfield_blocks(blocks)
         assert len(sanitized) == 2

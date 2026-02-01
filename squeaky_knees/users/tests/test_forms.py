@@ -1,6 +1,5 @@
 """Module for all Form Tests."""
 
-from django.test import RequestFactory
 from django.utils.translation import gettext_lazy as _
 
 from squeaky_knees.users.forms import UserAdminCreationForm
@@ -47,6 +46,7 @@ class TestSignupRecaptchaForms:
         assert "captcha" in UserSignupForm.declared_fields
         # Verify it's a ReCaptchaField
         from django_recaptcha.fields import ReCaptchaField
+
         assert isinstance(UserSignupForm.declared_fields["captcha"], ReCaptchaField)
 
     def test_social_signup_form_has_captcha_field(self):
@@ -58,4 +58,7 @@ class TestSignupRecaptchaForms:
         # Check that captcha is in declared_fields
         assert "captcha" in UserSocialSignupForm.declared_fields
         # Verify it's a ReCaptchaField
-        assert isinstance(UserSocialSignupForm.declared_fields["captcha"], ReCaptchaField)
+        assert isinstance(
+            UserSocialSignupForm.declared_fields["captcha"],
+            ReCaptchaField,
+        )

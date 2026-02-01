@@ -2,7 +2,6 @@
 
 import pytest
 from django.core.cache import cache
-from django.test import Client
 
 from config.ratelimit import get_client_ip
 from config.ratelimit import get_identifier_for_user_action
@@ -42,7 +41,10 @@ class TestRateLimitingUtilities:
 
     def test_get_identifier_for_authenticated_user(self, rf, django_user_model):
         """Identifier includes user ID for authenticated users."""
-        user = django_user_model.objects.create_user(username="testuser", password="pass")
+        user = django_user_model.objects.create_user(
+            username="testuser",
+            password="pass",
+        )
         request = rf.get("/")
         request.user = user
         identifier = get_identifier_for_user_action(request, "test_action")
@@ -62,7 +64,12 @@ class TestRateLimitingUtilities:
         """First attempt should not be rate limited."""
         request = rf.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
-        result = is_rate_limited(request, "test_action", max_attempts=3, window_seconds=60)
+        result = is_rate_limited(
+            request,
+            "test_action",
+            max_attempts=3,
+            window_seconds=60,
+        )
         assert result is False
 
     def test_is_rate_limited_allows_within_limit(self, rf, clear_cache):
@@ -70,7 +77,12 @@ class TestRateLimitingUtilities:
         request = rf.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
         for i in range(3):
-            result = is_rate_limited(request, "test_action", max_attempts=5, window_seconds=60)
+            result = is_rate_limited(
+                request,
+                "test_action",
+                max_attempts=5,
+                window_seconds=60,
+            )
             assert result is False
 
     def test_is_rate_limited_blocks_over_limit(self, rf, clear_cache):
@@ -79,7 +91,12 @@ class TestRateLimitingUtilities:
         request.META["REMOTE_ADDR"] = "192.168.1.1"
         for i in range(3):
             is_rate_limited(request, "test_action", max_attempts=3, window_seconds=60)
-        result = is_rate_limited(request, "test_action", max_attempts=3, window_seconds=60)
+        result = is_rate_limited(
+            request,
+            "test_action",
+            max_attempts=3,
+            window_seconds=60,
+        )
         assert result is True
 
     def test_is_rate_limited_different_actions(self, rf, clear_cache):
@@ -104,7 +121,12 @@ class TestRateLimitingUtilities:
 
         request2 = rf.get("/")
         request2.user = user2
-        result = is_rate_limited(request2, "test_action", max_attempts=3, window_seconds=60)
+        result = is_rate_limited(
+            request2,
+            "test_action",
+            max_attempts=3,
+            window_seconds=60,
+        )
         assert result is False
 
     def test_get_rate_limit_info(self, rf, clear_cache):
@@ -142,14 +164,22 @@ class TestCommentFormRateLimiting:
 
         from squeaky_knees.blog.forms import CommentForm
 
-        user = django_user_model.objects.create_user(username="testuser", password="pass")
+        user = django_user_model.objects.create_user(
+            username="testuser",
+            password="pass",
+        )
         rf = RequestFactory()
 
         # Simulate hitting the rate limit
         for i in range(10):
             request = rf.post("/", {"text": f"comment {i}"})
             request.user = user
-            is_rate_limited(request, "comment_add", max_attempts=10, window_seconds=3600)
+            is_rate_limited(
+                request,
+                "comment_add",
+                max_attempts=10,
+                window_seconds=3600,
+            )
 
         # Next attempt should be rate limited
         request = rf.post("/", {"text": '{"value": "test"}'})
@@ -188,7 +218,10 @@ class TestSignupFormRateLimiting:
 
         # Simulate hitting the rate limit
         for i in range(5):
-            request = rf.post("/", {"username": f"user{i}", "email": f"user{i}@example.com"})
+            request = rf.post(
+                "/",
+                {"username": f"user{i}", "email": f"user{i}@example.com"},
+            )
             request.META["REMOTE_ADDR"] = "192.168.1.1"
             request.user = None
             is_rate_limited(request, "user_signup", max_attempts=5, window_seconds=3600)

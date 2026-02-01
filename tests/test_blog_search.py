@@ -3,9 +3,7 @@
 import pytest
 from django.test import Client
 from django.urls import reverse
-from wagtail.models import Page
 
-from squeaky_knees.blog.models import BlogPage
 from squeaky_knees.blog.search_forms import BlogSearchForm
 
 
@@ -22,7 +20,10 @@ class TestBlogSearchForm:
         """Empty query should fail."""
         form = BlogSearchForm({"query": ""})
         assert not form.is_valid()
-        assert "required" in str(form.errors).lower() or "empty" in str(form.errors).lower()
+        assert (
+            "required" in str(form.errors).lower()
+            or "empty" in str(form.errors).lower()
+        )
 
     def test_search_form_too_short(self):
         """Query shorter than 2 chars should fail."""
@@ -34,7 +35,10 @@ class TestBlogSearchForm:
         """Query longer than 200 chars should fail."""
         form = BlogSearchForm({"query": "x" * 300})
         assert not form.is_valid()
-        assert "characters" in str(form.errors).lower() or "exceed" in str(form.errors).lower()
+        assert (
+            "characters" in str(form.errors).lower()
+            or "exceed" in str(form.errors).lower()
+        )
 
     def test_search_form_removes_harmful_chars(self):
         """Harmful characters should be removed from query."""
@@ -88,7 +92,8 @@ class TestBlogSearchView:
         """Harmful characters in query should be removed."""
         client = Client()
         response = client.get(
-            reverse("blog:search"), {"query": "django<script>alert()</script>"}
+            reverse("blog:search"),
+            {"query": "django<script>alert()</script>"},
         )
         assert response.status_code == 200
 
@@ -105,7 +110,8 @@ class TestBlogSearchView:
         # Search for something that shouldn't exist
         client = Client()
         response = client.get(
-            reverse("blog:search"), {"query": "xyzuniquethingnothere"}
+            reverse("blog:search"),
+            {"query": "xyzuniquethingnothere"},
         )
         content = response.content.decode()
         # Should have search results section
@@ -127,7 +133,6 @@ class TestBlogSearchIntegration:
         """Search should find blog posts by title."""
         # This is a basic integration test
         # Actual search results depend on Wagtail search backend configuration
-        pass
 
     def test_search_form_sanitizes_input(self):
         """Search form should sanitize user input."""

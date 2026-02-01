@@ -1,6 +1,6 @@
 {% load wagtailcore_tags %}
 
-<pre><code{% if value.language %} class="language-{{ value.language }}"{% endif %}>
+<pre><code {% if value.language %} class="language-{{ value.language }}"{% endif %}>
 {% if value.code %}
 {{ value.code }}
 {% elif value.content %}
