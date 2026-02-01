@@ -1,16 +1,13 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from config.ratelimit import is_rate_limited
+
 from .email import send_comment_notification
 from .forms import CommentForm
-from .models import BlogPage
-from .models import Comment
+from .models import BlogPage, Comment
 from .search_forms import BlogSearchForm
 
 
@@ -103,8 +100,8 @@ def moderate_comments(request):
             "error": "Too many search requests. Please wait a moment.",
             "query_string": "",
         })
-    
-    
+
+
 def search_blog(request):
     """Search blog posts by title, intro, and body content."""
     form = BlogSearchForm()
@@ -125,4 +122,5 @@ def search_blog(request):
         "query_string": query_string,
         "result_count": len(results),
     }
+    return render(request, "blog/search_results.html", context)
     return render(request, "blog/search_results.html", context)

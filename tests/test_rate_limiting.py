@@ -22,7 +22,7 @@ class TestSearchRateLimiting:
         from django.test import RequestFactory
 
         rf = RequestFactory()
-        
+
         # Simulate exceeding rate limit (30 attempts per 300 seconds)
         for i in range(31):
             request = rf.get(f"/blog/actions/search/?query=test{i}")
@@ -67,6 +67,7 @@ class TestSignupRateLimiting:
     def test_signup_rate_limit_enforced(self, client, clear_cache):
         """Signup should be rate limited (5 per hour)."""
         from django.test import RequestFactory
+
         from squeaky_knees.users.forms import UserSignupForm
 
         rf = RequestFactory()
@@ -86,4 +87,5 @@ class TestSignupRateLimiting:
         request.user = None
         form = UserSignupForm(request=request)
         # The form's clean() method should catch the rate limit
+        assert form.is_valid() is False
         assert form.is_valid() is False

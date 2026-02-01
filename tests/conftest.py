@@ -3,11 +3,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from wagtail.models import Page
-from wagtail.models import Site
+from wagtail.models import Page, Site
 
-from squeaky_knees.blog.models import BlogIndexPage
-from squeaky_knees.blog.models import BlogPage
+from squeaky_knees.blog.models import BlogIndexPage, BlogPage
 
 User = get_user_model()
 
@@ -104,4 +102,3 @@ def clear_cache():
     cache.clear()
     yield
     cache.clear()
-

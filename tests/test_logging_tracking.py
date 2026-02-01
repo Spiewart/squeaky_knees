@@ -3,8 +3,7 @@
 import logging
 
 import pytest
-from django.test import Client
-from django.test import override_settings
+from django.test import Client, override_settings
 
 
 @pytest.mark.django_db

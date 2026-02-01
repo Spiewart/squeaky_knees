@@ -1,8 +1,7 @@
 """Views for sitemap, robots.txt, RSS feed, and health check."""
 
 from django.db import connection
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 
@@ -11,8 +10,7 @@ def sitemap_view(request):
     """Generate sitemap.xml for search engines."""
     from wagtail.models import Page
 
-    from squeaky_knees.blog.models import BlogIndexPage
-    from squeaky_knees.blog.models import BlogPage
+    from squeaky_knees.blog.models import BlogIndexPage, BlogPage
 
     # Get all published blog pages
     blog_pages = BlogPage.objects.live().public().order_by("-date")
@@ -60,7 +58,7 @@ def rss_feed_view(request):
 
 def health_check(request):
     """Health check endpoint that verifies app and database connectivity.
-    
+
     Returns:
         JSON response with status and database connection status.
     """
@@ -68,7 +66,7 @@ def health_check(request):
         # Test database connection
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
-        
+
         return JsonResponse({
             "status": "ok",
             "database": "connected",
