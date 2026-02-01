@@ -61,30 +61,30 @@ class TestCommentLengthValidation:
     def test_validate_comment_length_valid(self):
         """Valid comment length should pass."""
         blocks = [{"type": "rich_text", "value": "<p>Hello world</p>"}]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is True
-        assert error == ""
+        assert _error == ""
 
     def test_validate_comment_length_empty(self):
         """Empty comment should fail."""
         blocks = [{"type": "rich_text", "value": "<p></p>"}]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is False
-        assert "empty" in error.lower()
+        assert "empty" in _error.lower()
 
     def test_validate_comment_length_exceeds_max(self):
         """Comment exceeding max length should fail."""
         long_text = "x" * 6000
         blocks = [{"type": "rich_text", "value": f"<p>{long_text}</p>"}]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is False
-        assert "exceeds" in error.lower()
+        assert "exceeds" in _error.lower()
 
     def test_validate_comment_length_strips_html(self):
         """HTML tags should be stripped for length calculation."""
         # 50 x's = 50 chars, wrapped in HTML tags
         blocks = [{"type": "rich_text", "value": "<p>" + "x" * 50 + "</p>"}]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is True
 
     def test_validate_comment_length_code_block(self):
@@ -95,7 +95,7 @@ class TestCommentLengthValidation:
                 "value": {"content": "print('hello')", "language": "python"},
             },
         ]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is True
 
     def test_validate_comment_length_multiple_blocks(self):
@@ -104,12 +104,12 @@ class TestCommentLengthValidation:
             {"type": "rich_text", "value": "<p>" + "x" * 2000 + "</p>"},
             {"type": "code", "value": {"content": "y" * 2000, "language": "python"}},
         ]
-        is_valid, error = validate_comment_length(blocks)
+        is_valid, _error = validate_comment_length(blocks)
         assert is_valid is True
 
     def test_validate_comment_length_invalid_format(self):
         """Invalid format should fail."""
-        is_valid, error = validate_comment_length("not a list")
+        is_valid, _error = validate_comment_length("not a list")
         assert is_valid is False
 
 
@@ -148,22 +148,22 @@ class TestUsernameValidation:
 
     def test_validate_username_allows_hyphen(self):
         """Username with hyphen should pass."""
-        is_valid, error = validate_username("john-doe")
+        is_valid, _error = validate_username("john-doe")
         assert is_valid is True
 
     def test_validate_username_allows_underscore(self):
         """Username with underscore should pass."""
-        is_valid, error = validate_username("john_doe")
+        is_valid, _error = validate_username("john_doe")
         assert is_valid is True
 
     def test_validate_username_allows_numbers(self):
         """Username with numbers should pass."""
-        is_valid, error = validate_username("user123")
+        is_valid, _error = validate_username("user123")
         assert is_valid is True
 
     def test_validate_username_non_string(self):
         """Non-string username should fail."""
-        is_valid, error = validate_username(123)
+        is_valid, _error = validate_username(123)
         assert is_valid is False
 
 
@@ -184,17 +184,17 @@ class TestEmailValidation:
 
     def test_validate_email_no_at_sign(self):
         """Email without @ should fail."""
-        is_valid, error = validate_email("userexample.com")
+        is_valid, _error = validate_email("userexample.com")
         assert is_valid is False
 
     def test_validate_email_no_domain_dot(self):
         """Email without domain dot should fail."""
-        is_valid, error = validate_email("user@example")
+        is_valid, _error = validate_email("user@example")
         assert is_valid is False
 
     def test_validate_email_multiple_at_signs(self):
         """Email with multiple @ should fail."""
-        is_valid, error = validate_email("user@domain@example.com")
+        is_valid, _error = validate_email("user@domain@example.com")
         assert is_valid is False
 
     def test_validate_email_too_long(self):
@@ -205,22 +205,22 @@ class TestEmailValidation:
 
     def test_validate_email_local_part_too_long(self):
         """Email local part exceeding RFC 5321 should fail."""
-        is_valid, error = validate_email("x" * 100 + "@example.com")
+        is_valid, _error = validate_email("x" * 100 + "@example.com")
         assert is_valid is False
 
     def test_validate_email_with_whitespace(self):
         """Email with whitespace should be trimmed."""
-        is_valid, error = validate_email("  user@example.com  ")
+        is_valid, _error = validate_email("  user@example.com  ")
         assert is_valid is True
 
     def test_validate_email_uppercase(self):
         """Email should be lowercased."""
-        is_valid, error = validate_email("USER@EXAMPLE.COM")
+        is_valid, _error = validate_email("USER@EXAMPLE.COM")
         assert is_valid is True
 
     def test_validate_email_non_string(self):
         """Non-string email should fail."""
-        is_valid, error = validate_email(123)
+        is_valid, _error = validate_email(123)
         assert is_valid is False
 
 
@@ -291,6 +291,6 @@ class TestStreamFieldSanitization:
         blocks = [
             {"type": "code", "value": {"content": "print('test')"}},
         ]
-        sanitized, errors = sanitize_streamfield_blocks(blocks)
+        sanitized, _errors = sanitize_streamfield_blocks(blocks)
         assert len(sanitized) == 1
         assert sanitized[0]["value"]["language"] == ""

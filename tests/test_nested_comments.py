@@ -479,7 +479,7 @@ class TestNestedCommentsTemplateRendering:
             approved=True,
         )
 
-        reply = Comment.objects.create(
+        _reply = Comment.objects.create(
             blog_page=blog_post,
             author=user,
             parent=parent,
@@ -513,7 +513,7 @@ class TestNestedCommentsTemplateRendering:
             approved=True,
         )
 
-        level2 = Comment.objects.create(
+        _level2 = Comment.objects.create(
             blog_page=blog_post,
             author=user,
             parent=level1,
@@ -531,7 +531,7 @@ class TestNestedCommentsTemplateRendering:
 
     def test_reply_form_includes_code_block_option(self, client, blog_post, user):
         """Reply form should include option to add code blocks."""
-        parent = Comment.objects.create(
+        _parent = Comment.objects.create(
             blog_page=blog_post,
             author=user,
             text=[{"type": "rich_text", "value": "<p>Parent</p>"}],
@@ -614,7 +614,10 @@ class TestNestedCommentSubmission:
             f"/blog/actions/comment/{blog_post.id}/",
             {
                 "parent_id": parent.id,
-                "text": '[{"type":"code","value":{"language":"python","content":"print(hello)"}}]',
+                "text": (
+                    '[{"type":"code","value":{"language":"python",'
+                    '"content":"print(hello)"}}]'
+                ),
                 "captcha": "test_token",
             },
         )
@@ -641,7 +644,10 @@ class TestNestedCommentSubmission:
             f"/blog/actions/comment/{blog_post.id}/",
             {
                 "parent_id": parent.id,
-                "text": '[{"type":"rich_text","value":"<p>Text</p>"},{"type":"code","value":{"language":"python","content":"x=1"}}]',
+                "text": (
+                    '[{"type":"rich_text","value":"<p>Text</p>"},'
+                    '{"type":"code","value":{"language":"python","content":"x=1"}}]'
+                ),
                 "captcha": "test_token",
             },
         )

@@ -76,7 +76,7 @@ class TestRateLimitingUtilities:
         """Attempts within limit should not be rate limited."""
         request = rf.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
-        for i in range(3):
+        for _i in range(3):
             result = is_rate_limited(
                 request,
                 "test_action",
@@ -89,7 +89,7 @@ class TestRateLimitingUtilities:
         """Attempts over limit should be rate limited."""
         request = rf.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
-        for i in range(3):
+        for _i in range(3):
             is_rate_limited(request, "test_action", max_attempts=3, window_seconds=60)
         result = is_rate_limited(
             request,
@@ -103,7 +103,7 @@ class TestRateLimitingUtilities:
         """Different actions should have separate rate limits."""
         request = rf.get("/")
         request.META["REMOTE_ADDR"] = "192.168.1.1"
-        for i in range(3):
+        for _i in range(3):
             is_rate_limited(request, "action_a", max_attempts=3, window_seconds=60)
         # action_b should not be affected
         result = is_rate_limited(request, "action_b", max_attempts=3, window_seconds=60)
@@ -116,7 +116,7 @@ class TestRateLimitingUtilities:
 
         request1 = rf.get("/")
         request1.user = user1
-        for i in range(3):
+        for _i in range(3):
             is_rate_limited(request1, "test_action", max_attempts=3, window_seconds=60)
 
         request2 = rf.get("/")

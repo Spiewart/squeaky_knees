@@ -45,10 +45,12 @@ class TestLogging:
 
     def test_comment_moderation_logging(self, blog_post, user):
         """Comment moderation actions should be logged."""
+        from django.core.exceptions import ValidationError
+
         from squeaky_knees.blog.models import Comment
 
-        with pytest.raises(Exception):
-            comment = Comment.objects.create(
+        with pytest.raises(ValidationError):
+            _comment = Comment.objects.create(
                 blog_page=blog_post,
                 author=None,  # This should raise
                 text=[{"type": "rich_text", "value": "<p>Test</p>"}],
@@ -72,7 +74,7 @@ class TestLogging:
 
     def test_logger_child_relationship(self):
         """Parent-child logger relationships should work."""
-        parent_logger = logging.getLogger("squeaky_knees")
+        _parent_logger = logging.getLogger("squeaky_knees")
         child_logger = logging.getLogger("squeaky_knees.blog")
 
         # Child logger should have parent
@@ -120,7 +122,7 @@ class TestErrorTracking:
     def test_rate_limit_errors_handled(self, client):
         """Rate limiting errors should be graceful."""
         # Multiple requests should not cause unhandled errors
-        for i in range(5):
+        for _i in range(5):
             response = client.get("/blog/")
             # Should get response (200 or similar)
             assert response.status_code in [200, 301, 302, 429]

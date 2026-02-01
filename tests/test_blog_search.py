@@ -113,7 +113,7 @@ class TestBlogSearchView:
             reverse("blog:search"),
             {"query": "xyzuniquethingnothere"},
         )
-        content = response.content.decode()
+        _content = response.content.decode()
         # Should have search results section
         assert response.status_code == 200
 
