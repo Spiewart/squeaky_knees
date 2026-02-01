@@ -64,14 +64,23 @@ docker run -d \
 
 #### 4. Create Environment Files
 
-Create `/opt/squeaky_knees/.envs/.production/` directory with production settings:
+Create the `.envs/.production/` directory structure locally, then transfer via FileZilla:
 
 ```bash
-# Create directory structure matching project
+# Create directory structure on droplet
 mkdir -p /opt/squeaky_knees/.envs/.production
+```
 
-# Create Django environment file
-cat > /opt/squeaky_knees/.envs/.production/.django << 'EOF'
+**Using FileZilla to Transfer Environment Files:**
+
+1. Connect to your droplet via SFTP:
+   - Host: `sftp://your-droplet-ip`
+   - Port: `22`
+   - Username: `root` (or your SSH user)
+   - Password: Your SSH key or password
+
+2. Create `.django` file locally with these settings:
+```
 # Django Settings
 DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=<GENERATE_STRONG_SECRET_KEY>
@@ -92,10 +101,10 @@ MAILGUN_DOMAIN=yourdomain.com
 DJANGO_AWS_ACCESS_KEY_ID=<YOUR_AWS_KEY>
 DJANGO_AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET>
 DJANGO_AWS_STORAGE_BUCKET_NAME=squeaky-knees-static
-EOF
+```
 
-# Create PostgreSQL environment file
-cat > /opt/squeaky_knees/.envs/.production/.postgres << 'EOF'
+3. Create `.postgres` file locally with these settings:
+```
 # PostgreSQL Database
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
@@ -103,9 +112,12 @@ POSTGRES_DB=squeaky_knees
 POSTGRES_USER=squeaky_knees
 POSTGRES_PASSWORD=<STRONG_PASSWORD_HERE>
 DATABASE_URL=postgres://squeaky_knees:<PASSWORD>@postgres:5432/squeaky_knees
-EOF
+```
 
-# Secure the files
+4. Transfer both files to `/opt/squeaky_knees/.envs/.production/` via FileZilla
+
+5. Set proper permissions on the droplet:
+```bash
 chmod 600 /opt/squeaky_knees/.envs/.production/.django
 chmod 600 /opt/squeaky_knees/.envs/.production/.postgres
 ```
