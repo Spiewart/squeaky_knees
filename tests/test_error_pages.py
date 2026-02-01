@@ -1,8 +1,6 @@
 """Tests for custom error pages."""
 
 import pytest
-from django.test import Client
-from django.test import override_settings
 
 
 @pytest.mark.django_db
@@ -58,7 +56,8 @@ class TestErrorPages:
         response = client.get("/nonexistent-page-12345/")
         content = response.content.decode()
         # Should have title tag
-        assert "<title>" in content and "</title>" in content
+        assert "<title>" in content
+        assert "</title>" in content
 
     def test_404_status_code_correct(self, client):
         """404 page should return 404 status code."""
@@ -69,23 +68,25 @@ class TestErrorPages:
         """CSRF error page should be configured."""
         # This tests that 403_csrf.html is used
         # We can't easily trigger this in tests but should verify template exists
+        from django.template.exceptions import TemplateDoesNotExist
         from django.template.loader import get_template
 
         try:
             template = get_template("403_csrf.html")
             assert template is not None
-        except Exception:
+        except TemplateDoesNotExist:
             # Template might not be loadable in test environment
             pass
 
     def test_permission_denied_page_exists(self, client):
         """Permission denied (403) page should exist."""
+        from django.template.exceptions import TemplateDoesNotExist
         from django.template.loader import get_template
 
         try:
             template = get_template("403.html")
             assert template is not None
-        except Exception:
+        except TemplateDoesNotExist:
             pass
 
     def test_error_pages_use_base_template(self, client):
@@ -97,11 +98,8 @@ class TestErrorPages:
 
     def test_404_page_accessible(self, client):
         """404 page should be accessible without raising exceptions."""
-        try:
-            response = client.get("/this-page-does-not-exist-xyz/")
-            assert response.status_code == 404
-        except Exception as e:
-            pytest.fail(f"404 page raised exception: {e}")
+        response = client.get("/this-page-does-not-exist-xyz/")
+        assert response.status_code == 404
 
     def test_404_page_returns_content(self, client):
         """404 page should return response content."""
