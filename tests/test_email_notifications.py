@@ -157,8 +157,12 @@ class TestCommentNotificationEmails:
 
         original_send_mail = email_module.send_mail
 
+        class EmailServiceError(OSError):
+            """Custom exception for email service errors."""
+
         def mock_send_mail(*args, **kwargs):
-            raise Exception("Email service error")
+            error_msg = "Email service error"
+            raise EmailServiceError(error_msg)
 
         email_module.send_mail = mock_send_mail
         try:
@@ -213,7 +217,7 @@ class TestCommentApprovalEmails:
         blog_post,
         user,
     ):
-        """send_comment_approval_notification should return False if author has no email."""
+        """Return False if comment author has no email."""
         user.email = ""
         user.save()
 
@@ -351,8 +355,12 @@ class TestCommentApprovalEmails:
 
         original_send_mail = email_module.send_mail
 
+        class EmailServiceError(OSError):
+            """Custom exception for email service errors."""
+
         def mock_send_mail(*args, **kwargs):
-            raise Exception("Email service error")
+            error_msg = "Email service error"
+            raise EmailServiceError(error_msg)
 
         email_module.send_mail = mock_send_mail
         try:

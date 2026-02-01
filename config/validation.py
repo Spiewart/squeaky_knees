@@ -67,14 +67,12 @@ def sanitize_html(html_content: str) -> str:
     )
 
     # Remove style tags
-    sanitized = re.sub(
+    return re.sub(
         r"<style[^>]*>.*?</style>",
         "",
         sanitized,
         flags=re.DOTALL | re.IGNORECASE,
     )
-
-    return sanitized
 
 
 def validate_comment_length(text_blocks: list) -> tuple[bool, str]:
@@ -155,32 +153,24 @@ def validate_email(email: str) -> tuple[bool, str]:
     Returns:
         Tuple of (is_valid, error_message)
     """
-    if not isinstance(email, str):
-        return False, "Email must be a string"
+    # Type and basic presence check
+    if not isinstance(email, str) or not email.strip():
+        return False, "Email must be a non-empty string"
 
     email = email.strip().lower()
-
-    if not email:
-        return False, "Email cannot be empty"
 
     if len(email) > MAX_EMAIL_LENGTH:
         return False, f"Email exceeds maximum length of {MAX_EMAIL_LENGTH}"
 
-    # Basic email validation
-    if "@" not in email or "." not in email.split("@")[1]:
-        return False, "Invalid email format"
-
-    # Prevent domain spoofing
+    # Prevent domain spoofing - check for exactly one @
     if email.count("@") != 1:
         return False, "Invalid email format"
 
     local, domain = email.rsplit("@", 1)
 
-    if not local or not domain:
+    # Validate both parts exist and local part is not too long (RFC 5321)
+    if not local or not domain or len(local) > 64 or "." not in domain:
         return False, "Invalid email format"
-
-    if len(local) > 64:  # RFC 5321
-        return False, "Email local part exceeds maximum length"
 
     return True, ""
 

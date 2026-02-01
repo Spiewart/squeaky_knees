@@ -20,7 +20,4 @@ class SecurityHeadersMiddleware:
         if "X-Frame-Options" not in response:
             response["X-Frame-Options"] = "DENY"
 
-        # Enforce HTTPS in production (set in production settings)
-        # response["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-
         return response

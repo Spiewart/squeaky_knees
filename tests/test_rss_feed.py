@@ -36,7 +36,8 @@ class TestRSSFeed:
         """RSS feed should include site title."""
         response = client.get("/feed.xml")
         content = response.content.decode()
-        assert "<title>" in content and "</title>" in content
+        assert "<title>" in content
+        assert "</title>" in content
 
     def test_rss_feed_includes_link(self, client):
         """RSS feed should include site link."""
@@ -150,7 +151,9 @@ class TestRSSFeed:
         # Newer post should appear before older post
         newer_pos = content.find("Newer Post")
         older_pos = content.find("Older Post")
-        assert newer_pos > 0 and older_pos > 0 and newer_pos < older_pos
+        assert newer_pos > 0
+        assert older_pos > 0
+        assert newer_pos < older_pos
 
     def test_rss_feed_escapes_html(self, client, blog_post):
         """RSS feed should properly escape HTML in descriptions."""

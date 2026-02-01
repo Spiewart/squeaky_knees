@@ -26,7 +26,7 @@ class CommentForm(forms.ModelForm):
     def __init__(self, *args, request=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
-        # Replace StreamField form field with plain text field to bypass StreamField validation
+        # Replace StreamField with plain text field to bypass validation
         self.fields["text"] = forms.CharField(
             label="Your Comment",
             widget=forms.HiddenInput(attrs={"id": "comment-text-json"}),
@@ -55,13 +55,16 @@ class CommentForm(forms.ModelForm):
             self.RATE_LIMIT_MAX_ATTEMPTS,
             self.RATE_LIMIT_WINDOW_SECONDS,
         ):
-            raise forms.ValidationError(
-                "You are posting comments too frequently. Please try again in a few minutes.",
+            rate_limit_msg = (
+                "You are posting comments too frequently. "
+                "Please try again in a few minutes."
             )
+            raise forms.ValidationError(rate_limit_msg)
 
         text_input = self.cleaned_data.get("text")
         if not text_input:
-            raise forms.ValidationError("Comment cannot be empty.")
+            empty_msg = "Comment cannot be empty."
+            raise forms.ValidationError(empty_msg)
 
         import json
         from html import escape
@@ -74,11 +77,13 @@ class CommentForm(forms.ModelForm):
                 parsed = None
             if isinstance(parsed, list):
                 if not parsed:
-                    raise forms.ValidationError("Comment cannot be empty.")
+                    empty_msg = "Comment cannot be empty."
+                    raise forms.ValidationError(empty_msg)
                 # Sanitize and validate blocks
                 sanitized, errors = sanitize_streamfield_blocks(parsed)
                 if errors:
-                    raise forms.ValidationError(f"Invalid comment format: {errors[0]}")
+                    error_msg = f"Invalid comment format: {errors[0]}"
+                    raise forms.ValidationError(error_msg)
                 # Validate total comment length
                 is_valid, error_msg = validate_comment_length(sanitized)
                 if not is_valid:

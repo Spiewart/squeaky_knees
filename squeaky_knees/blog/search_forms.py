@@ -23,17 +23,16 @@ class BlogSearchForm(forms.Form):
         query = self.cleaned_data.get("query", "").strip()
 
         if not query:
-            raise forms.ValidationError("Search query cannot be empty.")
+            msg = "Search query cannot be empty."
+            raise forms.ValidationError(msg)
 
         if len(query) < 2:
-            raise forms.ValidationError("Search query must be at least 2 characters.")
+            msg = "Search query must be at least 2 characters."
+            raise forms.ValidationError(msg)
 
         if len(query) > 200:
-            raise forms.ValidationError("Search query cannot exceed 200 characters.")
+            msg = "Search query cannot exceed 200 characters."
+            raise forms.ValidationError(msg)
 
         # Remove potentially harmful characters
-        query = (
-            query.replace("<", "").replace(">", "").replace('"', "").replace("'", "")
-        )
-
-        return query
+        return query.replace("<", "").replace(">", "").replace('"', "").replace("'", "")

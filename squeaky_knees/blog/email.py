@@ -49,9 +49,10 @@ def send_comment_notification(comment):
             html_message=html_message,
             fail_silently=False,
         )
-        return True
-    except Exception:
+    except OSError:
         return False
+    else:
+        return True
 
 
 def send_comment_approval_notification(comment):
@@ -82,6 +83,7 @@ def send_comment_approval_notification(comment):
             html_message=html_message,
             fail_silently=False,
         )
-        return True
-    except Exception:
+    except OSError:
         return False
+    else:
+        return True

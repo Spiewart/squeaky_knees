@@ -1,6 +1,8 @@
 """Views for sitemap, robots.txt, RSS feed, and health check."""
 
 from django.db import connection
+from django.db.utils import DatabaseError
+from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -75,7 +77,7 @@ def health_check(request):
             },
             status=200,
         )
-    except Exception as e:
+    except (DatabaseError, OperationalError) as e:
         return JsonResponse(
             {
                 "status": "error",

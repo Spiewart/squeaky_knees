@@ -93,7 +93,8 @@ class TestRobotsTxt:
         response = client.get("/robots.txt")
         content = response.content.decode().lower()
         # Should have configuration for bots (even if allowing all)
-        assert ("user-agent" in content) and ("*" in content or "googlebot" in content)
+        assert "user-agent" in content
+        assert "*" in content or "googlebot" in content
 
 
 @pytest.mark.django_db

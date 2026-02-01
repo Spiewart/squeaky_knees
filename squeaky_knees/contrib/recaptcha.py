@@ -1,5 +1,6 @@
 import json
 import logging
+from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import Request
 from urllib.request import urlopen
@@ -33,9 +34,9 @@ def verify_recaptcha_v3(token, action, remote_ip=None):
             "https://www.google.com/recaptcha/api/siteverify",
             data=urlencode(payload).encode("utf-8"),
         )
-        with urlopen(request, timeout=5) as response:
+        with urlopen(request, timeout=5) as response:  # noqa: S310
             result = json.loads(response.read().decode("utf-8"))
-    except Exception:
+    except URLError:
         logger.exception("reCAPTCHA verification failed.")
         return False, 0.0
 
@@ -43,10 +44,9 @@ def verify_recaptcha_v3(token, action, remote_ip=None):
     score = float(result.get("score") or 0.0)
     response_action = result.get("action")
 
-    if not success or response_action != action:
-        return False, score
-
-    if score < settings.RECAPTCHA_V3_SCORE_THRESHOLD:
-        return False, score
-
-    return True, score
+    return (
+        success
+        and response_action == action
+        and score >= settings.RECAPTCHA_V3_SCORE_THRESHOLD,
+        score,
+    )

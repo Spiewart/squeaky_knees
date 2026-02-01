@@ -60,9 +60,11 @@ class BlogIndexPage(Page):
         paginator = Paginator(all_blogpages, self.posts_per_page)
         page_number = request.GET.get("page", 1)
 
+        from django.core.paginator import InvalidPage
+
         try:
             page_obj = paginator.page(page_number)
-        except Exception:
+        except InvalidPage:
             # If page number is invalid, return first page
             page_obj = paginator.page(1)
 
@@ -209,7 +211,7 @@ class Comment(ClusterableModel):
             current = current.parent
         return depth
 
-    def get_all_replies(self, approved_only=True):
+    def get_all_replies(self, *, approved_only: bool = True):
         """Get all replies to this comment recursively."""
         replies = []
         direct_replies = (
