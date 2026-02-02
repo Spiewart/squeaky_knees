@@ -182,7 +182,7 @@ dependencies = [
     "django-model-utils==5.0.0",
     "django-redis==6.0.0",
     "django-storages[s3]==1.14.6",
-    "gunicorn==24.1.1",
+    "gunicorn==25.0.0",
     "hiredis==3.3.0",
     "pillow==11.3.0",
     "psycopg[c]==3.3.2",
