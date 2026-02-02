@@ -14,6 +14,17 @@ This project uses GitHub Actions for CI/CD to deploy to a DigitalOcean Droplet.
 
 Configure these in your GitHub repository settings under `Settings > Secrets and variables > Actions`:
 
+#### Environment Setup
+
+**Important**: Create a GitHub Actions Environment named `DigitalOcean` for deployment secrets:
+
+1. Go to `Settings > Environments`
+2. Click `New environment`
+3. Name it: `DigitalOcean`
+4. Add the secrets below to this environment
+
+#### Secrets Table
+
 | Secret | Description | Example |
 |--------|-------------|---------|
 | `DO_TOKEN` | DigitalOcean API token | `dop_v1_...` |
@@ -21,6 +32,8 @@ Configure these in your GitHub repository settings under `Settings > Secrets and
 | `DROPLET_HOST` | Droplet IP address | `157.230.x.x` |
 | `DROPLET_USER` | SSH user (usually `root`) | `root` |
 | `SSH_PRIVATE_KEY` | SSH private key for droplet access | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+
+**Note**: All of the above secrets should be added to the `DigitalOcean` environment. The deploy workflow is configured to use secrets from this environment.
 
 ### Droplet Setup
 
@@ -181,6 +194,7 @@ The deployment happens automatically on push to `main`:
    - Checks migrations
 
 2. **Deploy Workflow** (`.github/workflows/deploy.yml`):
+   - Uses secrets from the `DigitalOcean` GitHub environment
    - Builds Docker image
    - Pushes to DigitalOcean Container Registry
    - SSHs to droplet
@@ -188,6 +202,8 @@ The deployment happens automatically on push to `main`:
    - Runs migrations
    - Restarts container
    - Verifies deployment
+
+**Important**: The deploy workflow requires the `DigitalOcean` environment to be configured with the deployment secrets. Without it, the workflow will fail with "token: Input required and not supplied".
 
 ### Manual Deployment
 
