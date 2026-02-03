@@ -157,6 +157,8 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -euo pipefail
+
             echo "=== Waiting for container to start ==="
             sleep 10
 
@@ -175,11 +177,19 @@ jobs:
 
             echo "=== Testing health endpoint (with retries) ==="
             for i in {1..30}; do
-                if curl -sf -H "Host: ${{ secrets.DROPLET_HOST }}" http://127.0.0.1:8000/health/ | grep -q '"status":"ok"'; then
+              http_code=$(curl -s -o /tmp/healthcheck_body \
+                -w "%{http_code}" \
+                -H "Host: ${{ secrets.DROPLET_HOST }}" \
+                http://127.0.0.1:8000/health/ || true)
+
+              if [ "$http_code" = "200" ] && grep -q '"status":"ok"' /tmp/healthcheck_body; then
                 echo "✅ Health check passed!"
                 exit 0
               fi
-              echo "Attempt $i/30 failed, waiting 2s..."
+
+              echo "Attempt $i/30 failed (HTTP $http_code)."
+              echo "Response body:"
+              tail -100 /tmp/healthcheck_body || true
               sleep 2
             done
 
