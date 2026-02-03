@@ -1,5 +1,6 @@
-# Pull base image
-FROM python:3.13-slim-bookworm
+# Pull base image - Alpine for minimal memory footprint
+# Alpine reduces image size by ~60% compared to slim, critical for low-memory environments
+FROM python:3.13-alpine
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -7,12 +8,14 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
+# Install system dependencies - Alpine uses apk instead of apt
+# PostgreSQL dev libraries needed for psycopg PostgreSQL adapter
+RUN apk add --no-cache \
+    build-base \
+    postgresql-dev \
     gettext \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    libffi-dev \
+    && rm -rf /var/cache/apk/*
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv

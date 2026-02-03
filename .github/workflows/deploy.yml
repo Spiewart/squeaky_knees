@@ -53,6 +53,21 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Ensure swap space exists for low-memory environments
+            if [ ! -f /swapfile ]; then
+              echo "=== Setting up swap space ==="
+              fallocate -l 1G /swapfile
+              chmod 600 /swapfile
+              mkswap /swapfile
+              swapon /swapfile
+              echo '/swapfile none swap sw 0 0' >> /etc/fstab
+              swapon --show
+            fi
+
+            # Clean up old images to free memory before pulling new ones
+            echo "=== Cleaning up old Docker images ==="
+            docker image prune -af --filter "until=24h"
+
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
