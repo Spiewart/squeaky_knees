@@ -38,5 +38,6 @@ RUN uv run python manage.py collectstatic --noinput || true
 # Expose port
 EXPOSE 8000
 
-# Run gunicorn
-CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "config.wsgi:application"]
+# Run gunicorn with single worker for low-memory environments
+# Use 1 worker for droplets with <1GB RAM to avoid OOM kills
+CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "config.wsgi:application"]
