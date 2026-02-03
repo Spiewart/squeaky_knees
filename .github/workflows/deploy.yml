@@ -39,6 +39,14 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+      - name: Clean up old DOCR images
+        run: |
+          # Start garbage collection to free up space
+          doctl registry garbage-collection start --include-untagged-manifests --force
+
+          # List repositories to verify
+          doctl registry repository list-tags ${{ env.IMAGE_NAME }}
+
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
