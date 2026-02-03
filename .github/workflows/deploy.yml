@@ -34,18 +34,28 @@ jobs:
             -t ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             .
 
+      - name: Clean up old DOCR images (before push)
+        run: |
+          # Get list of all tags for this image
+          TAGS=$(doctl registry repository list-tags ${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }} --format Tag --no-header 2>/dev/null | grep -v "latest" | sort -r | tail -n +6)
+
+          # Delete tags older than the last 5 (keep latest, plus 4 backups)
+          for tag in $TAGS; do
+            echo "Deleting old tag: $tag"
+            doctl registry repository delete-tag ${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }} $tag --force || true
+          done
+
+          # Run garbage collection to free up space
+          echo "Running garbage collection..."
+          doctl registry garbage-collection start --include-untagged-manifests --force || true
+
+          # Wait a moment for GC to complete
+          sleep 10
+
       - name: Push image to DOCR
         run: |
           docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-      - name: Clean up old DOCR images
-        run: |
-          # Start garbage collection to free up space
-          doctl registry garbage-collection start --include-untagged-manifests --force
-
-          # List repositories to verify
-          doctl registry repository list-tags ${{ env.IMAGE_NAME }}
 
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
