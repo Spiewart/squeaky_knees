@@ -105,10 +105,33 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Wait for container to be healthy
-            sleep 5
-            docker ps | grep squeaky-knees || exit 1
+            echo "=== Waiting for container to start ==="
+            sleep 10
 
-            # Check health endpoint with database verification
-            curl -f http://localhost:8000/health/ | grep -q '"status":"ok"' || exit 1
-            echo "Deployment verified: app is healthy"
+            echo "=== Checking if container is running ==="
+            if ! docker ps | grep squeaky-knees; then
+              echo "ERROR: Container not running!"
+              echo "=== Container logs ==="
+              docker logs squeaky-knees 2>&1 | tail -50 || echo "No logs available"
+              echo "=== All containers ==="
+              docker ps -a
+              exit 1
+            fi
+
+            echo "=== Container is running ==="
+            docker ps | grep squeaky-knees
+
+            echo "=== Testing health endpoint (with retries) ==="
+            for i in {1..30}; do
+              if curl -sf http://localhost:8000/health/ | grep -q '"status":"ok"'; then
+                echo "✅ Health check passed!"
+                exit 0
+              fi
+              echo "Attempt $i/30 failed, waiting 2s..."
+              sleep 2
+            done
+
+            echo "ERROR: Health check failed after 30 attempts"
+            echo "=== Container logs ==="
+            docker logs squeaky-knees 2>&1 | tail -100
+            exit 1
