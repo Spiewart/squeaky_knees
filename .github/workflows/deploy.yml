@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths-ignore: ['docs/**', '**.md']
+  workflow_dispatch:
+    description: 'Manually trigger deployment'
 
 env:
   REGISTRY: ghcr.io
