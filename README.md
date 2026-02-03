@@ -190,3 +190,4 @@ squeaky_knees/
 ## Deployment
 
 The following details how to deploy this application.
+## TODO: describe final deployment implementation once its working.
