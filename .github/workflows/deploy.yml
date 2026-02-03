@@ -72,7 +72,45 @@ jobs:
               exit 1
             fi
 
-            # Stop and remove old container
+            # Load PostgreSQL environment variables
+            set -a
+            source /opt/squeaky_knees/.envs/.production/.postgres
+            set +a
+
+            # Ensure Docker network exists
+            docker network create squeaky_knees_network 2>/dev/null || true
+
+            # Ensure PostgreSQL container is set up and running
+            if ! docker ps -a --format '{{.Names}}' | grep -q '^postgres$'; then
+              echo "=== Setting up PostgreSQL container ==="
+              docker volume create postgres_data || true
+              docker run -d \
+                --name postgres \
+                --restart unless-stopped \
+                --network squeaky_knees_network \
+                -v postgres_data:/var/lib/postgresql/data \
+                -e POSTGRES_DB="${POSTGRES_DB}" \
+                -e POSTGRES_USER="${POSTGRES_USER}" \
+                -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+                postgres:16
+              echo "Waiting for PostgreSQL to be ready..."
+              sleep 10
+            elif ! docker ps --format '{{.Names}}' | grep -q '^postgres$'; then
+              echo "=== Starting existing PostgreSQL container ==="
+              docker start postgres
+              sleep 5
+            else
+              echo "=== PostgreSQL container is already running ==="
+            fi
+
+            # Verify PostgreSQL is accessible
+            docker exec postgres pg_isready -U "${POSTGRES_USER}" || {
+              echo "ERROR: PostgreSQL is not ready"
+              docker logs postgres --tail 20
+              exit 1
+            }
+
+            # Stop and remove old application container
             docker stop squeaky-knees || true
             docker rm squeaky-knees || true
 
