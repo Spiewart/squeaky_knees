@@ -46,6 +46,15 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:${{ github.sha }}
 
+      - name: Upload Docker Compose and configs
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.production.yml,compose/production/**"
+          target: "/opt/squeaky_knees"
+
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -53,6 +62,8 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -euo pipefail
+
             # Ensure swap space exists for low-memory environments
             if [ ! -f /swapfile ]; then
               echo "=== Setting up swap space ==="
@@ -68,14 +79,32 @@ jobs:
             echo "=== Cleaning up old Docker images ==="
             docker image prune -af --filter "until=24h"
 
+            # Ensure app and Traefik directories exist
+            mkdir -p /opt/squeaky_knees
+            mkdir -p /opt/squeaky_knees/traefik
+            if [ ! -f /opt/squeaky_knees/traefik/acme.json ]; then
+              touch /opt/squeaky_knees/traefik/acme.json
+              chmod 600 /opt/squeaky_knees/traefik/acme.json
+            fi
+
+            # Ensure Docker Compose env exists
+            if [ -n "${{ secrets.ACME_EMAIL }}" ]; then
+              cat > /opt/squeaky_knees/.env << 'EOF'
+              IMAGE_NAME=${{ env.IMAGE_NAME_LOWER }}
+              ACME_EMAIL=${{ secrets.ACME_EMAIL }}
+              EOF
+            elif [ ! -f /opt/squeaky_knees/.env ]; then
+              cat > /opt/squeaky_knees/.env << 'EOF'
+              IMAGE_NAME=${{ env.IMAGE_NAME_LOWER }}
+              ACME_EMAIL=
+              EOF
+            fi
+
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            # Set lowercase image name
-            IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-
             # Pull latest image
-            docker pull ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
 
             # Check for required environment files
             if [ ! -f /opt/squeaky_knees/.envs/.production/.django ]; then
@@ -95,57 +124,19 @@ jobs:
             # Ensure Docker network exists
             docker network create squeaky_knees_network 2>/dev/null || true
 
-            # Ensure PostgreSQL container is set up and running
-            if ! docker ps -a --format '{{.Names}}' | grep -q '^postgres$'; then
-              echo "=== Setting up PostgreSQL container ==="
-              docker volume create postgres_data || true
-              docker run -d \
-                --name postgres \
-                --restart unless-stopped \
-                --network squeaky_knees_network \
-                -v postgres_data:/var/lib/postgresql/data \
-                -e POSTGRES_DB="${POSTGRES_DB}" \
-                -e POSTGRES_USER="${POSTGRES_USER}" \
-                -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
-                postgres:16
-              echo "Waiting for PostgreSQL to be ready..."
-              sleep 10
-            elif ! docker ps --format '{{.Names}}' | grep -q '^postgres$'; then
-              echo "=== Starting existing PostgreSQL container ==="
-              docker start postgres
-              sleep 5
-            else
-              echo "=== PostgreSQL container is already running ==="
-            fi
+            # Pull latest service images
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml pull
 
-            # Verify PostgreSQL is accessible
-            docker exec postgres pg_isready -U "${POSTGRES_USER}" || {
-              echo "ERROR: PostgreSQL is not ready"
-              docker logs postgres --tail 20
-              exit 1
-            }
-
-            # Stop and remove old application container
-            docker stop squeaky-knees || true
-            docker rm squeaky-knees || true
+            # Start services with Docker Compose
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d
 
             # Run migrations
-            docker run --rm \
-              --env-file /opt/squeaky_knees/.envs/.production/.django \
-              --env-file /opt/squeaky_knees/.envs/.production/.postgres \
-              --network squeaky_knees_network \
-              ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest \
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
               uv run python manage.py migrate --noinput
 
-            # Start new container
-            docker run -d \
-              --name squeaky-knees \
-              --restart unless-stopped \
-              --env-file /opt/squeaky_knees/.envs/.production/.django \
-              --env-file /opt/squeaky_knees/.envs/.production/.postgres \
-              --network squeaky_knees_network \
-              -p 8000:8000 \
-              ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest
+            # Update static files (S3)
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+              uv run python manage.py collectstatic --noinput
 
             # Clean up old images
             docker image prune -af
@@ -163,17 +154,17 @@ jobs:
             sleep 10
 
             echo "=== Checking if container is running ==="
-            if ! docker ps | grep squeaky-knees; then
+            if ! docker ps | grep squeaky_knees_web; then
               echo "ERROR: Container not running!"
               echo "=== Container logs ==="
-              docker logs squeaky-knees 2>&1 | tail -50 || echo "No logs available"
+              docker logs squeaky_knees_web 2>&1 | tail -50 || echo "No logs available"
               echo "=== All containers ==="
               docker ps -a
               exit 1
             fi
 
             echo "=== Container is running ==="
-            docker ps | grep squeaky-knees
+            docker ps | grep squeaky_knees_web
 
             echo "=== Testing health endpoint (with retries) ==="
             for i in {1..30}; do
@@ -195,5 +186,5 @@ jobs:
 
             echo "ERROR: Health check failed after 30 attempts"
             echo "=== Container logs ==="
-            docker logs squeaky-knees 2>&1 | tail -100
+            docker logs squeaky_knees_web 2>&1 | tail -100
             exit 1

@@ -1,100 +1,51 @@
 # Deployment Guide
 
-## DigitalOcean Droplet Deployment
+This guide covers the minimum steps to deploy and operate the blog in production using Docker Compose, Traefik, PostgreSQL, and optional AWS S3 for static/media files.
 
-This project uses GitHub Actions for CI/CD to deploy to a DigitalOcean Droplet.
+## Requirements
 
-### Prerequisites
+- DigitalOcean Droplet with Docker
+- GitHub Container Registry (GHCR) access
+- Domain name pointing to the droplet
+- AWS account (only if using S3 for static/media)
 
-1. **DigitalOcean Droplet** with Docker installed
-2. **DigitalOcean Container Registry** (DOCR)
-3. **GitHub Secrets** configured
+## GitHub Actions Secrets
 
-### Required GitHub Secrets
+Configure these in the GitHub Actions environment named `DigitalOcean`:
 
-Configure these in your GitHub repository settings under `Settings > Secrets and variables > Actions`:
+| Secret | Description |
+|--------|-------------|
+| `DROPLET_HOST` | Droplet IP address |
+| `DROPLET_USER` | SSH user (usually `root`) |
+| `SSH_PRIVATE_KEY` | SSH private key for droplet access |
+| `ACME_EMAIL` | Email for Let's Encrypt (optional) |
 
-#### Environment Setup
+**Note**: `GITHUB_TOKEN` is provided automatically by GitHub Actions; you do not need to add it as a secret.
 
-**Important**: Create a GitHub Actions Environment named `DigitalOcean` for deployment secrets:
+## Droplet Setup
 
-1. Go to `Settings > Environments`
-2. Click `New environment`
-3. Name it: `DigitalOcean`
-4. Add the secrets below to this environment
-
-#### Secrets Table
-
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `DO_TOKEN` | DigitalOcean API token | `dop_v1_...` |
-| `REGISTRY_NAME` | Your DOCR registry name | `my-registry` |
-| `DROPLET_HOST` | Droplet IP address | `157.230.x.x` |
-| `DROPLET_USER` | SSH user (usually `root`) | `root` |
-| `SSH_PRIVATE_KEY` | SSH private key for droplet access | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-
-**Note**: All of the above secrets should be added to the `DigitalOcean` environment. The deploy workflow is configured to use secrets from this environment.
-
-### Droplet Setup
-
-#### 1. Install Docker
+### 1) Install Docker
 
 ```bash
-# Update package list
 apt-get update
-
-# Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
-
-# Verify installation
 docker --version
 ```
 
-#### 2. Create Docker Network
+### 2) Create required directories
 
 ```bash
-docker network create squeaky_knees_network
-```
-
-#### 3. Set Up PostgreSQL Container
-
-```bash
-# Create volume for data persistence
-docker volume create postgres_data
-
-# Run PostgreSQL container
-docker run -d \
-  --name postgres \
-  --restart unless-stopped \
-  --network squeaky_knees_network \
-  -v postgres_data:/var/lib/postgresql/data \
-  -e POSTGRES_DB=squeaky_knees \
-  -e POSTGRES_USER=squeaky_knees \
-  -e POSTGRES_PASSWORD=<STRONG_PASSWORD_HERE> \
-  postgres:16
-```
-
-#### 4. Create Environment Files
-
-Create the `.envs/.production/` directory structure locally, then transfer via FileZilla:
-
-```bash
-# Create directory structure on droplet
 mkdir -p /opt/squeaky_knees/.envs/.production
 ```
 
-**Using FileZilla to Transfer Environment Files:**
+## Environment Files
 
-1. Connect to your droplet via SFTP:
-   - Host: `sftp://your-droplet-ip`
-   - Port: `22`
-   - Username: `root` (or your SSH user)
-   - Password: Your SSH key or password
+Create these locally and copy to the droplet.
 
-2. Create `.django` file locally with these settings:
+### `.envs/.production/.django`
+
 ```
-# Django Settings
 DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=<GENERATE_STRONG_SECRET_KEY>
 DJANGO_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
@@ -110,15 +61,17 @@ DJANGO_DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 MAILGUN_API_KEY=<YOUR_MAILGUN_API_KEY>
 MAILGUN_DOMAIN=yourdomain.com
 
-# Static/Media (if using S3)
-DJANGO_AWS_ACCESS_KEY_ID=<YOUR_AWS_KEY>
-DJANGO_AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET>
-DJANGO_AWS_STORAGE_BUCKET_NAME=squeaky-knees-static
+# AWS S3 (optional)
+DJANGO_AWS_ACCESS_KEY_ID=<YOUR_AWS_ACCESS_KEY_ID>
+DJANGO_AWS_SECRET_ACCESS_KEY=<YOUR_AWS_SECRET_ACCESS_KEY>
+DJANGO_AWS_STORAGE_BUCKET_NAME=<YOUR_BUCKET_NAME>
+DJANGO_AWS_S3_REGION_NAME=us-east-1
+DJANGO_AWS_S3_CUSTOM_DOMAIN=<optional: CloudFront or custom domain>
 ```
 
-3. Create `.postgres` file locally with these settings:
+### `.envs/.production/.postgres`
+
 ```
-# PostgreSQL Database
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
 POSTGRES_DB=squeaky_knees
@@ -127,190 +80,110 @@ POSTGRES_PASSWORD=<STRONG_PASSWORD_HERE>
 DATABASE_URL=postgres://squeaky_knees:<PASSWORD>@postgres:5432/squeaky_knees
 ```
 
-4. Transfer both files to `/opt/squeaky_knees/.envs/.production/` via FileZilla
+Copy to the droplet:
 
-5. Set proper permissions on the droplet:
 ```bash
-chmod 600 /opt/squeaky_knees/.envs/.production/.django
-chmod 600 /opt/squeaky_knees/.envs/.production/.postgres
+scp .envs/.production/.django root@<DROPLET_IP>:/opt/squeaky_knees/.envs/.production/
+scp .envs/.production/.postgres root@<DROPLET_IP>:/opt/squeaky_knees/.envs/.production/
+ssh root@<DROPLET_IP>
+chmod 600 /opt/squeaky_knees/.envs/.production/*
 ```
 
-**Note**: The project uses a nested `.envs` structure:
-- `.envs/.local/.django` and `.envs/.local/.postgres` for local development
-- `.envs/.production/.django` and `.envs/.production/.postgres` for production
+## AWS S3 (Optional for Static/Media)
 
-#### 5. Set Up Nginx (Reverse Proxy)
+If you want static/media files on S3, do the following:
 
-Install and configure Nginx:
+1) Create a bucket
+```bash
+aws s3 mb s3://<YOUR_BUCKET_NAME> --region us-east-1
+```
+
+2) Create an IAM user with S3 access (List/Get/Put/Delete) and add its keys to `.django`.
+
+3) Make the bucket public for reads (static/media)
+```bash
+aws s3api put-bucket-policy --bucket <YOUR_BUCKET_NAME> --policy '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::<YOUR_BUCKET_NAME>/*"
+    }
+  ]
+}'
+```
+
+4) Static files are updated by the deployment workflow.
+
+## DNS
+
+Create A records for your domain:
+
+| Type | Host | Value |
+|------|------|-------|
+| A | @ | <DROPLET_IP> |
+| A | www | <DROPLET_IP> |
+
+## Deploy
 
 ```bash
-apt-get install -y nginx certbot python3-certbot-nginx
+ssh root@<DROPLET_IP>
+cd /opt/squeaky_knees
 
-# Create Nginx config
-cat > /etc/nginx/sites-available/squeaky_knees << 'EOF'
-server {
-    listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+# Clone repo (or copy docker-compose.production.yml and compose/)
+git clone <your-repo> .
 
-    client_max_body_size 10M;
-
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /static/ {
-        alias /var/www/squeaky_knees/static/;
-    }
-
-    location /media/ {
-        alias /var/www/squeaky_knees/media/;
-    }
-}
+# Docker Compose env
+cat > /opt/squeaky_knees/.env << 'EOF'
+IMAGE_NAME=your-github-username/squeaky_knees
+ACME_EMAIL=your-email@example.com
 EOF
 
-# Enable site
-ln -s /etc/nginx/sites-available/squeaky_knees /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
+# Log in and start
+echo "<GHCR_TOKEN>" | docker login ghcr.io -u <GHCR_USERNAME> --password-stdin
+docker-compose -f docker-compose.production.yml up -d
 
-# Test and reload
-nginx -t
-systemctl reload nginx
+# Migrate
+docker-compose -f docker-compose.production.yml exec web uv run python manage.py migrate --noinput
 
-# Get SSL certificate
-certbot --nginx -d yourdomain.com -d www.yourdomain.com
+# Optional: create admin
+docker-compose -f docker-compose.production.yml exec web uv run python manage.py createsuperuser
+
+# Update static files (required if using S3)
+docker-compose -f docker-compose.production.yml exec web uv run python manage.py collectstatic --noinput
 ```
 
-### CI/CD Workflow
+## Operations
 
-The deployment happens automatically on push to `main`:
-
-1. **CI Workflow** (`.github/workflows/ci.yml`):
-   - Runs linting (pre-commit)
-   - Runs tests with PostgreSQL
-   - Checks migrations
-
-2. **Deploy Workflow** (`.github/workflows/deploy.yml`):
-   - Uses secrets from the `DigitalOcean` GitHub environment
-   - Builds Docker image
-   - Pushes to DigitalOcean Container Registry
-   - SSHs to droplet
-   - Pulls latest image
-   - Runs migrations
-   - Restarts container
-   - Verifies deployment
-
-**Important**: The deploy workflow requires the `DigitalOcean` environment to be configured with the deployment secrets. Without it, the workflow will fail with "token: Input required and not supplied".
-
-### Manual Deployment
-
-If you need to deploy manually:
-
+### View logs
 ```bash
-# SSH to droplet
-ssh root@<DROPLET_IP>
-
-# Pull latest image
-docker login -u <DO_TOKEN> -p <DO_TOKEN> registry.digitalocean.com
-docker pull registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest
-
-# Stop old container
-docker stop squeaky-knees
-docker rm squeaky-knees
-
-# Run migrations
-docker run --rm \
-  --env-file /opt/squeaky_knees/.envs/.production/.django \
-  --env-file /opt/squeaky_knees/.envs/.production/.postgres \
-  --network squeaky_knees_network \
-  registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest \
-  uv run python manage.py migrate --noinput
-
-# Start new container
-docker run -d \
-  --name squeaky-knees \
-  --restart unless-stopped \
-  --env-file /opt/squeaky_knees/.envs/.production/.django \
-  --env-file /opt/squeaky_knees/.envs/.production/.postgres \
-  --network squeaky_knees_network \
-  -p 8000:8000 \
-  registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest
+docker-compose -f docker-compose.production.yml logs -f
 ```
 
-### Troubleshooting
-
-#### View container logs
+### Update to latest image
 ```bash
-docker logs -f squeaky-knees
+docker-compose -f docker-compose.production.yml pull
+docker-compose -f docker-compose.production.yml up -d
+docker-compose -f docker-compose.production.yml exec web uv run python manage.py migrate --noinput
 ```
 
-#### Access container shell
+### Backups
 ```bash
-docker exec -it squeaky-knees /bin/bash
+docker-compose -f docker-compose.production.yml exec postgres \
+  pg_dump -U squeaky_knees squeaky_knees > backup_$(date +%Y%m%d_%H%M%S).sql
 ```
 
-#### Check database connection
-```bash
-docker exec -it postgres psql -U squeaky_knees -d squeaky_knees
-```
+## Troubleshooting
 
-#### Rebuild and restart
-```bash
-docker stop squeaky-knees
-docker rm squeaky-knees
-docker rmi registry.digitalocean.com/<REGISTRY_NAME>/squeaky-knees:latest
-# Then re-pull and start
-```
+- **HTTPS not working**: verify DNS points to the droplet and ports 80/443 are open.
+- **502 errors**: check application logs and container health.
+- **S3 403**: verify bucket policy and IAM credentials.
 
-### Maintenance
+## Security Basics
 
-#### Database Backups
-
-```bash
-# Create backup
-docker exec postgres pg_dump -U squeaky_knees squeaky_knees > backup_$(date +%Y%m%d).sql
-
-# Restore backup
-docker exec -i postgres psql -U squeaky_knees squeaky_knees < backup_20260131.sql
-```
-
-#### Update Dependencies
-
-1. Update `pyproject.toml` locally
-2. Run `uv lock`
-3. Commit and push - CI/CD will deploy
-
-#### Clean Up Docker Resources
-
-```bash
-# Remove unused images
-docker image prune -af
-
-# Remove unused volumes
-docker volume prune -f
-```
-
-## Security Checklist
-
-- [ ] Strong `DJANGO_SECRET_KEY` generated
-- [ ] Database password is strong
-- [ ] `DJANGO_DEBUG=False` in production
-- [ ] `DJANGO_SECURE_SSL_REDIRECT=True`
-- [ ] SSL certificate installed (certbot)
-- [ ] Firewall configured (only ports 80, 443, 22)
-- [ ] SSH key authentication only (disable password auth)
-- [ ] Regular security updates (`apt-get update && apt-get upgrade`)
-- [ ] Environment file permissions restricted (`chmod 600 .envs/.production/*`)
-- [ ] reCAPTCHA keys configured
-- [ ] Email service configured for notifications
-
-## Monitoring
-
-Consider adding:
-- DigitalOcean Monitoring (built-in)
-- Sentry for error tracking
-- Uptime monitoring (UptimeRobot, etc.)
-- Log aggregation (Papertrail, etc.)
+- `DJANGO_DEBUG=False` in production
+- Strong `DJANGO_SECRET_KEY` and database password
+- Firewall open only on 22/80/443
+- SSH key authentication only
