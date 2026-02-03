@@ -89,15 +89,9 @@ jobs:
 
             # Ensure Docker Compose env exists
             if [ -n "${{ secrets.ACME_EMAIL }}" ]; then
-              cat > /opt/squeaky_knees/.env << 'EOF'
-              IMAGE_NAME=${{ env.IMAGE_NAME_LOWER }}
-              ACME_EMAIL=${{ secrets.ACME_EMAIL }}
-              EOF
+              printf "IMAGE_NAME=%s\nACME_EMAIL=%s\n" "${{ env.IMAGE_NAME_LOWER }}" "${{ secrets.ACME_EMAIL }}" > /opt/squeaky_knees/.env
             elif [ ! -f /opt/squeaky_knees/.env ]; then
-              cat > /opt/squeaky_knees/.env << 'EOF'
-              IMAGE_NAME=${{ env.IMAGE_NAME_LOWER }}
-              ACME_EMAIL=
-              EOF
+              printf "IMAGE_NAME=%s\nACME_EMAIL=\n" "${{ env.IMAGE_NAME_LOWER }}" > /opt/squeaky_knees/.env
             fi
 
             # Login to GitHub Container Registry
