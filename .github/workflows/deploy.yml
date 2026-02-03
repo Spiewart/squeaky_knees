@@ -6,8 +6,8 @@ on:
     paths-ignore: ['docs/**', '**.md']
 
 env:
-  REGISTRY: registry.digitalocean.com
-  IMAGE_NAME: squeaky-knees
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   deploy:
@@ -19,43 +19,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          token: ${{ secrets.DO_TOKEN }}
-
-      - name: Log in to DigitalOcean Container Registry
-        run: echo "${{ secrets.DO_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ secrets.DO_TOKEN }} --password-stdin
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
-            -t ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             .
 
-      - name: Clean up old DOCR images (before push)
+      - name: Push image to GHCR
         run: |
-          # Get list of all tags for this image
-          TAGS=$(doctl registry repository list-tags ${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }} --format Tag --no-header 2>/dev/null | grep -v "latest" | sort -r | tail -n +6)
-
-          # Delete tags older than the last 5 (keep latest, plus 4 backups)
-          for tag in $TAGS; do
-            echo "Deleting old tag: $tag"
-            doctl registry repository delete-tag ${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }} $tag --force || true
-          done
-
-          # Run garbage collection to free up space
-          echo "Running garbage collection..."
-          doctl registry garbage-collection start --include-untagged-manifests --force || true
-
-          # Wait a moment for GC to complete
-          sleep 10
-
-      - name: Push image to DOCR
-        run: |
-          docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Droplet
         uses: appleboy/ssh-action@v1.0.3
@@ -64,11 +45,11 @@ jobs:
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Login to registry
-            docker login -u ${{ secrets.DO_TOKEN }} -p ${{ secrets.DO_TOKEN }} ${{ env.REGISTRY }}
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             # Pull latest image
-            docker pull ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
             # Stop and remove old container
             docker stop squeaky-knees || true
@@ -79,7 +60,7 @@ jobs:
               --env-file /opt/squeaky_knees/.envs/.production/.django \
               --env-file /opt/squeaky_knees/.envs/.production/.postgres \
               --network squeaky_knees_network \
-              ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
               uv run python manage.py migrate --noinput
 
             # Start new container
@@ -90,7 +71,7 @@ jobs:
               --env-file /opt/squeaky_knees/.envs/.production/.postgres \
               --network squeaky_knees_network \
               -p 8000:8000 \
-              ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
             # Clean up old images
             docker image prune -af
