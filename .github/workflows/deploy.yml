@@ -25,7 +25,7 @@ jobs:
           token: ${{ secrets.DO_TOKEN }}
 
       - name: Log in to DigitalOcean Container Registry
-        run: doctl registry login --expiry-seconds 600
+        run: doctl registry login --expiry-seconds 1200
 
       - name: Build Docker image
         run: |
@@ -51,6 +51,9 @@ jobs:
 
           # Wait a moment for GC to complete
           sleep 10
+
+      - name: Re-login to DOCR before push
+        run: doctl registry login --expiry-seconds 1200
 
       - name: Push image to DOCR
         run: |
