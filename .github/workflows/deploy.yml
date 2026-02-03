@@ -182,7 +182,7 @@ jobs:
                 -H "Host: ${{ secrets.DROPLET_HOST }}" \
                 http://127.0.0.1:8000/health/ || true)
 
-              if [ "$http_code" = "200" ] && grep -q '"status":"ok"' /tmp/healthcheck_body; then
+              if [ "$http_code" = "200" ] && grep -q '"status"[[:space:]]*:[[:space:]]*"ok"' /tmp/healthcheck_body; then
                 echo "✅ Health check passed!"
                 exit 0
               fi
