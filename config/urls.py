@@ -10,11 +10,13 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from squeaky_knees.views import health_check
+from squeaky_knees.views import home_view
 from squeaky_knees.views import robots_txt_view
 from squeaky_knees.views import rss_feed_view
 from squeaky_knees.views import sitemap_view
 
 urlpatterns = [
+    path("", home_view, name="home"),
     path("health/", health_check, name="health"),
     path(
         "about/",

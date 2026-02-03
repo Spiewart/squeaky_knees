@@ -5,6 +5,8 @@ from django.db.utils import DatabaseError
 from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 
@@ -57,6 +59,27 @@ def rss_feed_view(request):
 
     xml_content = render_to_string("feed.xml", context)
     return HttpResponse(xml_content, content_type="application/rss+xml")
+
+
+def home_view(request):
+    """Homepage that redirects to the blog index when available.
+
+    If no BlogIndexPage exists yet, render a lightweight placeholder page.
+    """
+    from squeaky_knees.blog.models import BlogIndexPage
+
+    blog_index = BlogIndexPage.objects.live().public().first()
+    if blog_index:
+        return redirect(blog_index.url)
+
+    return render(
+        request,
+        "pages/home.html",
+        {
+            "site_url": request.build_absolute_uri("/").rstrip("/"),
+            "site_name": "Squeaky Knees",
+        },
+    )
 
 
 def health_check(request):
