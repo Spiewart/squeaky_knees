@@ -134,13 +134,13 @@ jobs:
             # Start services with Docker Compose
             docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d
 
-            # Run migrations
-            docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
-              uv run python manage.py migrate --noinput
+            # Run migrations (with timeout to avoid hanging deploys)
+            timeout 5m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+              /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py migrate --noinput'
 
-            # Update static files (S3)
-            docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
-              uv run python manage.py collectstatic --noinput
+            # Update static files (S3) (with timeout to avoid hanging deploys)
+            timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+              /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py collectstatic --noinput --verbosity 1'
 
             # Clean up old images
             docker image prune -af
