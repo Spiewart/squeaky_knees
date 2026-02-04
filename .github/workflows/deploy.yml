@@ -61,8 +61,8 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 20m
-          timeout: 30m
+          command_timeout: 60m
+          timeout: 70m
           script: |
             set -euo pipefail
 
@@ -137,12 +137,19 @@ jobs:
             docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d
 
             # Run migrations (with timeout to avoid hanging deploys)
-            timeout 5m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+            timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
               /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py migrate --noinput'
 
-            # Update static files (S3) (with timeout to avoid hanging deploys)
-            timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
-              /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py collectstatic --noinput --verbosity 1'
+            # Update static files (S3) (longer timeout; capture output for debugging)
+            echo "=== Running collectstatic (logs -> /tmp/collectstatic.log) ==="
+            timeout 45m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+              /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py collectstatic --noinput --verbosity 1' > /tmp/collectstatic.log 2>&1 || {
+                echo "collectstatic failed or timed out; last 200 lines:" >&2
+                tail -200 /tmp/collectstatic.log >&2 || true
+                exit 1
+              }
+            echo "=== collectstatic completed; tailing last 50 lines ==="
+            tail -50 /tmp/collectstatic.log || true
 
             # Clean up old images
             docker image prune -af
