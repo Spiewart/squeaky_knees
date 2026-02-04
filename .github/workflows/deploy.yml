@@ -79,6 +79,11 @@ jobs:
             echo "=== Cleaning up old Docker images ==="
             docker image prune -af --filter "until=24h"
 
+            # Free disk space (remove unused containers, images, volumes, networks)
+            echo "=== Cleaning up Docker disk usage ==="
+            docker system prune -af
+            docker volume prune -f
+
             # Ensure app and Traefik directories exist
             mkdir -p /opt/squeaky_knees
             mkdir -p /opt/squeaky_knees/traefik
