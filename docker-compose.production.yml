@@ -40,6 +40,17 @@ services:
     restart: unless-stopped
     networks:
       - squeaky_knees_network
+    shm_size: 128m
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=25
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:

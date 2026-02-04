@@ -2,6 +2,9 @@
   insecure = false
   debug = false
 
+[log]
+  level = "ERROR"
+
 [entryPoints.web]
   address = ":80"
 
