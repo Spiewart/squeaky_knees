@@ -85,6 +85,10 @@ jobs:
             docker image prune -af --filter "until=24h"
             docker builder prune -af
 
+            # Remove previous app image to free space before pull
+            echo "=== Removing previous app image ==="
+            docker image rm -f ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest || true
+
             # Ensure app and Traefik directories exist
             mkdir -p /opt/squeaky_knees
             mkdir -p /opt/squeaky_knees/traefik

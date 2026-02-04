@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     image: ghcr.io/${IMAGE_NAME}:latest
@@ -56,7 +54,7 @@ services:
     env_file:
       - /opt/squeaky_knees/.envs/.production/.postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
