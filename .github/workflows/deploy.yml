@@ -75,14 +75,15 @@ jobs:
               swapon --show
             fi
 
-            # Clean up old images to free memory before pulling new ones
-            echo "=== Cleaning up old Docker images ==="
-            docker image prune -af --filter "until=24h"
+            # Stop web/traefik to free image layers before pulling
+            echo "=== Stopping web/traefik to free space ==="
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml stop web traefik || true
 
-            # Free disk space (remove unused containers, images, volumes, networks)
+            # Free disk space (remove unused containers, images, build cache)
             echo "=== Cleaning up Docker disk usage ==="
-            docker system prune -af
-            docker volume prune -f
+            docker container prune -f
+            docker image prune -af --filter "until=24h"
+            docker builder prune -af
 
             # Ensure app and Traefik directories exist
             mkdir -p /opt/squeaky_knees
