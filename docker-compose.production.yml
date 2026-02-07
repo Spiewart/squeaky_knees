@@ -65,13 +65,15 @@ services:
     restart: unless-stopped
     networks:
       - squeaky_knees_network
+    command:
+      - --configFile=/etc/traefik/traefik.toml
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /opt/squeaky_knees/traefik/acme.json:/letsencrypt/acme.json:rw
-      - ./compose/production/traefik/traefik.toml:/traefik.toml:ro
+      - ./compose/production/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
     environment:
       - TRAEFIK_PROVIDERS_DOCKER=true
       - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
