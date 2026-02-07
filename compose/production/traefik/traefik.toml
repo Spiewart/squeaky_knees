@@ -3,7 +3,7 @@
   debug = false
 
 [log]
-  level = "ERROR"
+  level = "INFO"
 
 [entryPoints.web]
   address = ":80"
@@ -11,9 +11,14 @@
 [entryPoints.websecure]
   address = ":443"
 
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+  exposedByDefault = false
+  watch = true
+
 [certificatesResolvers.letsencrypt]
   [certificatesResolvers.letsencrypt.acme]
-    email = "your-email@example.com"
+    email = "noreply@squeakyknees.blog"
     storage = "/letsencrypt/acme.json"
     [certificatesResolvers.letsencrypt.acme.httpChallenge]
       entryPoint = "web"
