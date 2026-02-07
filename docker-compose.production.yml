@@ -21,13 +21,13 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.squeaky-knees.entrypoints=web,websecure"
-      - "traefik.http.routers.squeaky-knees.rule=Host(`yourdomain.com`,`www.yourdomain.com`)"
+      - "traefik.http.routers.squeaky-knees.rule=Host(`squeakyknees.blog`,`www.squeakyknees.blog`)"
       - "traefik.http.routers.squeaky-knees.service=squeaky-knees"
       - "traefik.http.services.squeaky-knees.loadbalancer.server.port=8000"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
       - "traefik.http.routers.squeaky-knees.middlewares=https-redirect"
       - "traefik.http.routers.squeaky-knees-secure.entrypoints=websecure"
-      - "traefik.http.routers.squeaky-knees-secure.rule=Host(`yourdomain.com`,`www.yourdomain.com`)"
+      - "traefik.http.routers.squeaky-knees-secure.rule=Host(`squeakyknees.blog`,`www.squeakyknees.blog`)"
       - "traefik.http.routers.squeaky-knees-secure.service=squeaky-knees"
       - "traefik.http.routers.squeaky-knees-secure.tls=true"
       - "traefik.http.routers.squeaky-knees-secure.tls.certresolver=letsencrypt"
@@ -75,7 +75,7 @@ services:
     environment:
       - TRAEFIK_PROVIDERS_DOCKER=true
       - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
-      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL}
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL:-noreply@squeakyknees.blog}
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/letsencrypt/acme.json
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web
     labels:
