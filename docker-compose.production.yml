@@ -71,12 +71,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /opt/squeaky_knees/traefik/acme.json:/letsencrypt/acme.json:rw
       - ./compose/production/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+      - ./compose/production/traefik/dynamic.toml:/etc/traefik/dynamic.toml:ro
     environment:
-      - TRAEFIK_PROVIDERS_DOCKER=true
-      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL:-noreply@squeakyknees.blog}
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/letsencrypt/acme.json
       - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web
