@@ -56,6 +56,7 @@ jobs:
             -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
             -e MAILGUN_API_KEY="${{ secrets.MAILGUN_API_KEY }}" \
             -e MAILGUN_DOMAIN="${{ secrets.MAILGUN_DOMAIN }}" \
+            -e SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
                         -e DJANGO_ADMIN_URL="admin/" \
                         -e DJANGO_ALLOWED_HOSTS="*" \
             -e DATABASE_URL="sqlite:////tmp/dummy.db" \
