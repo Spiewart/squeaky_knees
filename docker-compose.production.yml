@@ -10,8 +10,10 @@ services:
       - /opt/squeaky_knees/.envs/.production/.postgres
     depends_on:
       - postgres
+      - redis
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
+      - REDIS_URL=redis://redis:6379/0
     healthcheck:
       test: ["CMD", "/bin/sh", "-c", "wget --quiet --tries=1 --spider --header='Host: squeakyknees.blog' --header='X-Forwarded-Proto: https' http://127.0.0.1:8000/health/"]
       interval: 30s
@@ -59,6 +61,21 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: squeaky_knees_redis
+    restart: unless-stopped
+    networks:
+      - squeaky_knees_network
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - redis_data:/data
+
   traefik:
     image: traefik:v3.1
     container_name: squeaky_knees_traefik
@@ -78,6 +95,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:
