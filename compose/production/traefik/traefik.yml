@@ -4,10 +4,6 @@ log:
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: web-secure
 
   web-secure:
     address: ":443"
@@ -22,6 +18,14 @@ certificatesResolvers:
 
 http:
   routers:
+    web-router:
+      rule: "Host(`squeakyknees.blog`) || Host(`www.squeakyknees.blog`)"
+      entryPoints:
+        - web
+      middlewares:
+        - https-redirect
+      service: django
+
     web-secure-router:
       rule: "Host(`squeakyknees.blog`) || Host(`www.squeakyknees.blog`)"
       entryPoints:
@@ -29,6 +33,12 @@ http:
       service: django
       tls:
         certResolver: letsencrypt
+
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
 
   services:
     django:
