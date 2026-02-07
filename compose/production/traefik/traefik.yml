@@ -16,7 +16,7 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: "noreply@squeakyknees.blog"
-      storage: /etc/traefik/acme/acme.json
+      storage: /etc/traefik/acme.json
       httpChallenge:
         entryPoint: web
 
