@@ -54,6 +54,8 @@ jobs:
             -e DJANGO_AWS_SECRET_ACCESS_KEY="${{ secrets.DJANGO_AWS_SECRET_ACCESS_KEY }}" \
             -e DJANGO_AWS_STORAGE_BUCKET_NAME="${{ secrets.DJANGO_AWS_STORAGE_BUCKET_NAME }}" \
             -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+                        -e DJANGO_ADMIN_URL="admin/" \
+                        -e DJANGO_ALLOWED_HOSTS="*" \
             -e DATABASE_URL="sqlite:////tmp/dummy.db" \
             -e USE_DOCKER=yes \
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest \
