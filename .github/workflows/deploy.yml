@@ -193,7 +193,8 @@ jobs:
             for i in {1..30}; do
               http_code=$(curl -s -o /tmp/healthcheck_body \
                 -w "%{http_code}" \
-                -H "Host: ${{ secrets.DROPLET_HOST }}" \
+                -H "Host: squeakyknees.blog" \
+                -H "X-Forwarded-Proto: https" \
                 http://127.0.0.1:8000/health/ || true)
 
               if [ "$http_code" = "200" ] && grep -q '"status"[[:space:]]*:[[:space:]]*"ok"' /tmp/healthcheck_body; then
