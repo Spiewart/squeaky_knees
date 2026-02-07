@@ -1,0 +1,42 @@
+log:
+  level: INFO
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: web-secure
+
+  web-secure:
+    address: ":443"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "noreply@squeakyknees.blog"
+      storage: /etc/traefik/acme/acme.json
+      httpChallenge:
+        entryPoint: web
+
+http:
+  routers:
+    web-secure-router:
+      rule: "Host(`squeakyknees.blog`) || Host(`www.squeakyknees.blog`)"
+      entryPoints:
+        - web-secure
+      service: django
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    django:
+      loadBalancer:
+        servers:
+          - url: http://squeaky_knees_web:8000
+
+providers:
+  file:
+    filename: /etc/traefik/traefik.yml
+    watch: true
