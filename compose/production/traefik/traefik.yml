@@ -34,7 +34,7 @@ http:
     django:
       loadBalancer:
         servers:
-          - url: http://squeaky_knees_web:8000
+          - url: http://web:8000
 
 providers:
   file:
