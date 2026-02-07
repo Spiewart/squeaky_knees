@@ -46,6 +46,21 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:${{ github.sha }}
 
+      - name: Run collectstatic from CI (faster than on droplet)
+        run: |
+          docker run --rm \
+            -e DJANGO_SETTINGS_MODULE=config.settings.production \
+            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            -e AWS_STORAGE_BUCKET_NAME="${{ secrets.AWS_STORAGE_BUCKET_NAME }}" \
+            -e AWS_S3_REGION_NAME="${{ secrets.AWS_S3_REGION_NAME }}" \
+            -e AWS_S3_CUSTOM_DOMAIN="${{ secrets.AWS_S3_CUSTOM_DOMAIN }}" \
+            -e DJANGO_SECRET_KEY="${{ secrets.DJANGO_SECRET_KEY }}" \
+            -e DATABASE_URL="sqlite:////tmp/dummy.db" \
+            -e USE_DOCKER=yes \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest \
+            uv run python manage.py collectstatic --noinput --verbosity 1
+
       - name: Upload Docker Compose and configs
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -140,16 +155,8 @@ jobs:
             timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
               /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py migrate --noinput'
 
-            # Update static files (S3) (longer timeout; capture output for debugging)
-            echo "=== Running collectstatic (logs -> /tmp/collectstatic.log) ==="
-            timeout 45m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
-              /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py collectstatic --noinput --verbosity 1' > /tmp/collectstatic.log 2>&1 || {
-                echo "collectstatic failed or timed out; last 200 lines:" >&2
-                tail -200 /tmp/collectstatic.log >&2 || true
-                exit 1
-              }
-            echo "=== collectstatic completed; tailing last 50 lines ==="
-            tail -50 /tmp/collectstatic.log || true
+            # Collectstatic runs in CI now (much faster), so skip here
+            echo "=== Skipping collectstatic (already run in CI) ==="
 
             # Clean up old images
             docker image prune -af
