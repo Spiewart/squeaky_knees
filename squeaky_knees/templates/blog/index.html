@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Blog{% endblock %}
+{% block content %}
+  <main class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="text-center">
+          <h1 class="display-4 mb-4">Blog</h1>
+          <p class="lead text-muted">The blog is currently being set up. Check back soon!</p>
+          <a href="{% url 'home' %}" class="btn btn-primary mt-4">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+{% endblock %}

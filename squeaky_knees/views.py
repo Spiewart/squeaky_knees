@@ -5,7 +5,6 @@ from django.db.utils import DatabaseError
 from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.http import JsonResponse
-from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
@@ -62,19 +61,46 @@ def rss_feed_view(request):
 
 
 def home_view(request):
-    """Homepage that redirects to the blog index when available.
+    """Homepage with latest post excerpt and tag search links."""
+    from squeaky_knees.blog.models import BlogPage
 
-    If no BlogIndexPage exists yet, render a lightweight placeholder page.
-    """
-    from squeaky_knees.blog.models import BlogIndexPage
+    posts = BlogPage.objects.live().public().order_by("-date")
+    recent_post = posts.first()
 
-    blog_index = BlogIndexPage.objects.live().public().first()
-    if blog_index:
-        return redirect(blog_index.url)
+    tags = (
+        posts.values_list("tags__name", "tags__slug")
+        .exclude(tags__name__isnull=True)
+        .distinct()
+        .order_by("tags__name")
+    )
+    tag_links = [{"name": name, "slug": slug} for name, slug in tags]
 
     return render(
         request,
         "pages/home.html",
+        {
+            "site_url": request.build_absolute_uri("/").rstrip("/"),
+            "site_name": "Squeaky Knees",
+            "recent_post": recent_post,
+            "tag_links": tag_links,
+        },
+    )
+
+
+def blog_view(request):
+    """Blog index page that serves BlogIndexPage if it exists.
+
+    If no BlogIndexPage exists yet, render a placeholder page.
+    """
+    from squeaky_knees.blog.models import BlogIndexPage
+
+    blog_index = BlogIndexPage.objects.live().public().first()
+    if blog_index and blog_index.url:
+        return blog_index.serve(request)
+
+    return render(
+        request,
+        "blog/index.html",
         {
             "site_url": request.build_absolute_uri("/").rstrip("/"),
             "site_name": "Squeaky Knees",

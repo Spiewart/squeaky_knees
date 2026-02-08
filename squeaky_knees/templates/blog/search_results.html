@@ -22,10 +22,14 @@
           {% if form.query.errors %}<div class="alert alert-danger mt-2">{{ form.query.errors.0 }}</div>{% endif %}
         </form>
         <!-- Search Results -->
-        {% if query_string %}
+        {% if tag_string or query_string %}
           <div class="alert alert-info">
             Found <strong>{{ result_count }}</strong> result{{ result_count|pluralize }}
-            for "<strong>{{ query_string }}</strong>"
+            {% if tag_string %}
+              for tag "<strong>#{{ tag_string }}</strong>"
+            {% else %}
+              for "<strong>{{ query_string }}</strong>"
+            {% endif %}
           </div>
           {% if results %}
             <div class="search-results">
@@ -50,8 +54,12 @@
           </div>
         {% else %}
           <div class="alert alert-warning">
-            No blog posts found matching "<strong>{{ query_string }}</strong>".
-            Try a different search term.
+            {% if tag_string %}
+              No blog posts found with tag "<strong>#{{ tag_string }}</strong>".
+            {% else %}
+              No blog posts found matching "<strong>{{ query_string }}</strong>".
+              Try a different search term.
+            {% endif %}
           </div>
         {% endif %}
       {% else %}

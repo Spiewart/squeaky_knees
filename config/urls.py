@@ -9,6 +9,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from squeaky_knees.views import blog_view
 from squeaky_knees.views import health_check
 from squeaky_knees.views import home_view
 from squeaky_knees.views import robots_txt_view
@@ -38,6 +39,8 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     # Blog app actions (comment submission, etc.)
     path("blog/actions/", include("squeaky_knees.blog.urls", namespace="blog")),
+    # Blog index page (Django view)
+    path("blog/", blog_view, name="blog_index"),
     # Your stuff: custom urls includes go here
     # ...
     # Media files

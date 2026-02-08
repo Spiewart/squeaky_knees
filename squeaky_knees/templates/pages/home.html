@@ -1,11 +1,54 @@
 {% extends "base.html" %}
 
+{% block title %}Squeaky Knees{% endblock %}
 {% block content %}
   <section class="container py-5">
-    <div class="text-center">
-      <h1 class="mb-3">Squeaky Knees</h1>
-      <p class="lead mb-4">The blog is getting set up. Check back soon for new posts.</p>
-      <p class="mb-0">If you’re looking for the blog index, it will appear here once it’s published.</p>
+    <div class="p-5 mb-4 bg-light rounded-3">
+      <div class="container-fluid py-3">
+        <h1 class="display-5 fw-bold">Squeaky Knees</h1>
+        <p class="col-md-10 fs-5">
+          Practical guidance on knee health, osteoarthritis, and staying active. Explore
+          evidence-based insights, personal experience, and clear next steps for living well.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary btn-lg" href="{% url 'blog_index' %}">Visit the blog</a>
+          <a class="btn btn-outline-secondary btn-lg" href="{% url 'about' %}">About the site</a>
+        </div>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h4">Latest post</h2>
+            {% if recent_post %}
+              <h3 class="h5 mt-3">{{ recent_post.title }}</h3>
+              <p class="text-muted mb-2">{{ recent_post.date }}</p>
+              <p class="mb-3">{{ recent_post.intro }}</p>
+              <a class="btn btn-sm btn-primary" href="{{ recent_post.url }}">Read the latest post</a>
+            {% else %}
+              <p class="mb-0">New posts are on the way. Check back soon for the latest updates.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h4">Browse by topic</h2>
+            {% if tag_links %}
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                {% for tag in tag_links %}
+                  <a class="btn btn-outline-secondary btn-sm"
+                     href="{% url 'blog:search' %}?tag={{ tag.slug|urlencode }}">#{{ tag.name }}</a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="mb-0">Tag collections will appear once posts are published.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 {% endblock content %}

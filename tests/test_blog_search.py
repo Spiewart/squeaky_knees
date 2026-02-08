@@ -145,3 +145,133 @@ class TestBlogSearchIntegration:
             query = form.cleaned_data["query"]
             assert "<" not in query
             assert ">" not in query
+
+
+@pytest.mark.django_db
+class TestTagSearch:
+    """Test tag-based search functionality."""
+
+    def test_tag_search_by_slug(self, client, blog_post):
+        """Tag search should find posts by tag slug."""
+        # Add a tag to the blog post
+        blog_post.tags.add("test-tag")
+        blog_post.save()
+
+        response = client.get(reverse("blog:search"), {"tag": "test-tag"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert blog_post.title in content
+        assert "#test-tag" in content
+
+    def test_tag_search_by_name_fallback(self, client, blog_post):
+        """Tag search should fallback to name if slug doesn't match."""
+        blog_post.tags.add("Python")
+        blog_post.save()
+
+        response = client.get(reverse("blog:search"), {"tag": "Python"})
+
+        assert response.status_code == 200
+
+    def test_tag_search_empty_results(self, client):
+        """Tag search with no matches should show no results message."""
+        response = client.get(reverse("blog:search"), {"tag": "nonexistent-tag"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "No blog posts found" in content or "nonexistent-tag" in content
+
+    def test_tag_search_displays_tag_name(self, client):
+        """Tag search results should display the tag being searched."""
+        response = client.get(reverse("blog:search"), {"tag": "django"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "#django" in content or "django" in content
+
+    def test_tag_search_result_count(self, client, blog_post):
+        """Tag search should show result count."""
+        blog_post.tags.add("webdev")
+        blog_post.save()
+
+        response = client.get(reverse("blog:search"), {"tag": "webdev"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Found" in content
+        assert "result" in content.lower()
+
+    def test_tag_search_multiple_posts(self, client, blog_index, user):
+        """Tag search should find multiple posts with same tag."""
+        from datetime import date
+
+        from squeaky_knees.blog.models import BlogPage
+
+        # Create two posts with same tag
+        for i in range(2):
+            post = BlogPage(
+                title=f"Post {i}",
+                slug=f"post-{i}",
+                date=date.today(),
+                intro="Test intro",
+            )
+            post.body = [{"type": "rich_text", "value": "<p>Body</p>"}]
+            blog_index.add_child(instance=post)
+            post.save_revision().publish()
+            post.tags.add("python")
+            post.save()
+
+        response = client.get(reverse("blog:search"), {"tag": "python"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Post 0" in content
+        assert "Post 1" in content
+
+
+@pytest.mark.django_db
+class TestSearchFallback:
+    """Test fallback between tag and query search."""
+
+    def test_query_search_when_no_tag(self, client):
+        """Should use query search when no tag parameter."""
+        response = client.get(reverse("blog:search"), {"query": "django"})
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        # Should show query search (not tag search)
+        assert "django" in content.lower()
+
+    def test_tag_search_takes_precedence(self, client, blog_post):
+        """Tag search should take precedence over query search."""
+        blog_post.tags.add("python")
+        blog_post.save()
+
+        # Both tag and query params provided
+        response = client.get(
+            reverse("blog:search"),
+            {"tag": "python", "query": "django"},
+        )
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        # Should show tag search results (not query)
+        assert "#python" in content or "tag" in content.lower()
+
+    def test_empty_tag_falls_back_to_query(self, client):
+        """Empty tag should fallback to query search."""
+        response = client.get(
+            reverse("blog:search"),
+            {"tag": "   ", "query": "test"},
+        )
+
+        assert response.status_code == 200
+        # Should process query search since tag is empty
+
+    def test_no_params_shows_search_form(self, client):
+        """No search params should show empty search form."""
+        response = client.get(reverse("blog:search"))
+
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Enter a search term" in content or "Search Blog Posts" in content

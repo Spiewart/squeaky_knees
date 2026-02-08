@@ -636,7 +636,19 @@ ruff check --fix .
 djlint --reformat .
 
 # Run tests
+# If using virtualenvwrapper:
+workon squeaky_knees
 pytest
+
+# Or directly:
+pytest
+
+# Run specific test files:
+pytest tests/test_blog_search.py
+pytest tests/test_url_routing.py
+
+# Run with verbose output:
+pytest -v
 
 # Check migrations
 python manage.py makemigrations --check
