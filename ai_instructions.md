@@ -464,6 +464,95 @@ def blog_post_view(request: HttpRequest, pk: int) -> HttpResponse:
     return render(request, "blog/post_detail.html", context)
 ```
 
+### Forms and Crispy Forms Integration
+
+#### Django-ReCAPTCHA v3 with Crispy Forms
+
+When using `django-recaptcha` with `ReCaptchaV3` widget and `crispy-forms`, follow this pattern to ensure forms submit correctly:
+
+**Problem:** By default, `{% crispy form %}` renders a complete `<form>` element including opening and closing tags. If you place a submit button after `{% crispy form %}`, the button will be **outside** the form element, causing form submissions to fail silently.
+
+**Solution:** Use `FormHelper` with `form_tag=False` to render only the form fields, then manually wrap them in `<form>` tags with your button inside.
+
+##### Step 1: Configure FormHelper in Form Class
+
+```python
+from allauth.account.forms import SignupForm
+from crispy_forms.helper import FormHelper
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV3
+
+
+class UserSignupForm(SignupForm):
+    """Form for user signup with reCAPTCHA v3."""
+
+    captcha = ReCaptchaField(
+        widget=ReCaptchaV3(attrs={"data-action": "signup"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Configure helper to NOT render <form> tags
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # Critical: prevents crispy from rendering form tags
+```
+
+##### Step 2: Use Manual Form Tags in Template
+
+```django
+{% load crispy_forms_tags %}
+
+{{ form.media }}  {# Critical: renders reCAPTCHA widget JavaScript #}
+<form method="post" action="{% url 'account_signup' %}">
+  {% csrf_token %}
+  {% crispy form %}  {# Renders only fields, no <form> tags #}
+  <button type="submit" class="btn btn-primary">Sign Up</button>
+</form>
+```
+
+##### Why This Works
+
+1. **`{{ form.media }}`**: Renders the JavaScript required by `ReCaptchaV3` widget. Without this, the reCAPTCHA widget won't initialize and forms will fail silently.
+
+2. **`FormHelper.form_tag = False`**: Tells crispy-forms to render only the form fields (input elements, labels, errors) without wrapping them in `<form>` tags.
+
+3. **Manual `<form>` tags**: You control the form wrapper, ensuring the submit button is placed **inside** the form element. This is required for the submit event to fire correctly.
+
+4. **Button placement**: The submit button must be inside the `<form>` element for the form's submit event listener to capture button clicks.
+
+##### Common Mistakes
+
+**❌ DON'T:**
+```django
+{# BAD: Button is outside the form element #}
+{{ form.media }}
+{% crispy form %}  {# This renders <form>...</form> completely #}
+<button type="submit">Submit</button>  {# This is OUTSIDE the form! #}
+```
+
+**✅ DO:**
+```django
+{# GOOD: Button is inside manual form tags #}
+{{ form.media }}
+<form method="post">
+  {% csrf_token %}
+  {% crispy form %}  {# form_tag=False means only fields rendered #}
+  <button type="submit">Submit</button>  {# Inside the form ✓ #}
+</form>
+```
+
+##### Verification in Browser DevTools
+
+To verify the fix works:
+```javascript
+// In browser console:
+const form = document.querySelector('form');
+const button = document.querySelector('button[type="submit"]');
+console.log(form.contains(button));  // Should return true
+```
+
+If `form.contains(button)` returns `false`, the button is outside the form and submissions won't work.
+
 ## Pre-commit Hooks
 
 ### Configured Hooks

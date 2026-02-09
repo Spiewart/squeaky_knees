@@ -51,10 +51,23 @@ def add_comment(request, page_id):
 
             logger = logging.getLogger(__name__)
             logger.error("Comment form errors: %s", form.errors)
-            messages.error(
-                request,
-                "Comment submission failed. Please try again.",
-            )
+
+            # Build helpful error message from form errors
+            error_messages = [
+                str(error) for errors in form.errors.values() for error in errors
+            ]
+
+            if error_messages:
+                error_text = " ".join(error_messages)
+                messages.error(
+                    request,
+                    f"Comment submission failed: {error_text}",
+                )
+            else:
+                messages.error(
+                    request,
+                    "Comment submission failed. Please try again.",
+                )
     return redirect(blog_page.url)
 
 

@@ -101,7 +101,7 @@ This template displays a single comment and all its direct replies.
     window.toggleReplyForm = function(commentId) {
       const form = document.getElementById('reply-to-' + commentId);
       if (form) {
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        form.classList.toggle('reply-form-hidden');
       }
     };
 

@@ -1,5 +1,6 @@
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
+from crispy_forms.helper import FormHelper
 from django.contrib.auth import forms as admin_forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -47,6 +48,8 @@ class UserSignupForm(SignupForm):
     def __init__(self, *args, request=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # Don't render <form> tag
 
     def clean(self):
         """Add rate limiting check to signup form."""
@@ -75,3 +78,8 @@ class UserSocialSignupForm(SocialSignupForm):
     captcha = ReCaptchaField(
         widget=ReCaptchaV3(attrs={"data-action": "social_signup"}),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # Don't render <form> tag
