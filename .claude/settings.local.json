@@ -5,7 +5,15 @@
       "Bash(git stash:*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(python:*)",
+      "Bash(echo:*)",
+      "Bash(ruff check:*)",
+      "Bash(chmod:*)",
+      "Bash(pre-commit run update-todo-patches:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)"
     ]
   }
 }
