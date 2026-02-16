@@ -43,6 +43,17 @@ repos:
       - id: djlint-reformat-django
       - id: djlint-django
 
+  # ── TODO.md patches auto-update ──────────────────────────────────
+  - repo: local
+    hooks:
+      - id: update-todo-patches
+        name: update TODO.md patches
+        entry: python scripts/update_todo_patches.py
+        language: python
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
 # sets up .pre-commit-ci.yaml to ensure pre-commit dependencies stay up to date
 ci:
   autoupdate_schedule: weekly
