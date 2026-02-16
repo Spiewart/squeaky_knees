@@ -1,10 +1,14 @@
-"""Views for sitemap, robots.txt, RSS feed, and health check."""
+"""Views for sitemap, robots.txt, RSS feed, contact, and health check."""
 
+from django.conf import settings
+from django.contrib import messages
+from django.core.mail import send_mail
 from django.db import connection
 from django.db.utils import DatabaseError
 from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.http import JsonResponse
+from django.shortcuts import redirect
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
@@ -106,6 +110,60 @@ def blog_view(request):
             "site_name": "Squeaky Knees",
         },
     )
+
+
+def contact_view(request):
+    """Contact form page. Sends an HTML email to the site admin on submission."""
+    from squeaky_knees.forms import ContactForm
+
+    if request.method == "POST":
+        form = ContactForm(request.POST, request=request)
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            message = form.cleaned_data["message"]
+
+            html_message = render_to_string(
+                "pages/email/contact_notification.html",
+                {"name": name, "email": email, "message": message},
+            )
+
+            try:
+                send_mail(
+                    f"Contact form: {name}",
+                    "",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [settings.ADMINS[0][1]],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+            except OSError:
+                msg = (
+                    "Sorry, there was a problem sending your message."
+                    " Please try again later."
+                )
+                messages.error(request, msg)
+            else:
+                request.session["contact_success"] = {
+                    "name": name,
+                    "email": email,
+                    "message": message,
+                }
+                return redirect("contact_success")
+    else:
+        form = ContactForm()
+
+    return render(request, "pages/contact.html", {"form": form})
+
+
+def contact_success_view(request):
+    """Display contact form success page with submitted message details."""
+    success_data = request.session.pop("contact_success", None)
+
+    if not success_data:
+        return redirect("contact")
+
+    return render(request, "pages/contact_success.html", success_data)
 
 
 def health_check(request):

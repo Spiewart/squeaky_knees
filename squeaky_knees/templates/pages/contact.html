@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+  Contact
+{% endblock title %}
+{% block content %}
+  <section class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h1 class="h3 mb-3">Get in touch</h1>
+            <p class="text-muted mb-4">
+              Have a question about knee OA, my research, or just want to say hello?
+              Send me a message and I'll get back to you.
+            </p>
+            {{ form.media }}
+            <form method="post" action="{% url 'contact' %}">
+              {% csrf_token %}
+              {% crispy form %}
+              <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock content %}

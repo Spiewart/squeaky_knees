@@ -9,8 +9,10 @@ services:
       - /opt/squeaky_knees/.envs/.production/.django
       - /opt/squeaky_knees/.envs/.production/.postgres
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
       - REDIS_URL=redis://redis:6379/0
@@ -20,19 +22,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.squeaky-knees.entrypoints=web,websecure"
-      - "traefik.http.routers.squeaky-knees.rule=Host(`squeakyknees.blog`,`www.squeakyknees.blog`)"
-      - "traefik.http.routers.squeaky-knees.service=squeaky-knees"
-      - "traefik.http.services.squeaky-knees.loadbalancer.server.port=8000"
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.squeaky-knees.middlewares=https-redirect"
-      - "traefik.http.routers.squeaky-knees-secure.entrypoints=websecure"
-      - "traefik.http.routers.squeaky-knees-secure.rule=Host(`squeakyknees.blog`,`www.squeakyknees.blog`)"
-      - "traefik.http.routers.squeaky-knees-secure.service=squeaky-knees"
-      - "traefik.http.routers.squeaky-knees-secure.tls=true"
-      - "traefik.http.routers.squeaky-knees-secure.tls.certresolver=letsencrypt"
 
   postgres:
     image: postgres:16
@@ -90,8 +79,6 @@ services:
     volumes:
         - /opt/squeaky_knees/traefik/acme.json:/etc/traefik/acme.json:rw
         - ./compose/production/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-    labels:
-      - "traefik.enable=false"
 
 volumes:
   postgres_data:

@@ -9,6 +9,7 @@ from django.test import TestCase
 from django_recaptcha.fields import ReCaptchaField
 
 from squeaky_knees.blog.forms import CommentForm
+from squeaky_knees.forms import ContactForm
 from squeaky_knees.users.forms import UserSignupForm
 from squeaky_knees.users.forms import UserSocialSignupForm
 
@@ -24,6 +25,7 @@ class ReCaptchaFormConsistencyTest(TestCase):
             ("UserSignupForm", UserSignupForm, {}),
             ("UserSocialSignupForm", UserSocialSignupForm, {"sociallogin": Mock()}),
             ("CommentForm", CommentForm, {}),
+            ("ContactForm", ContactForm, {}),
         ]
 
         for form_name, form_class, kwargs in forms_to_test:
@@ -50,6 +52,7 @@ class ReCaptchaFormConsistencyTest(TestCase):
             ("UserSignupForm", UserSignupForm, {}),
             ("UserSocialSignupForm", UserSocialSignupForm, {"sociallogin": Mock()}),
             ("CommentForm", CommentForm, {}),
+            ("ContactForm", ContactForm, {}),
         ]
 
         for form_name, form_class, kwargs in forms_to_test:
@@ -80,6 +83,7 @@ class ReCaptchaFormConsistencyTest(TestCase):
             ("UserSignupForm", UserSignupForm, {}),
             ("UserSocialSignupForm", UserSocialSignupForm, {"sociallogin": Mock()}),
             ("CommentForm", CommentForm, {}),
+            ("ContactForm", ContactForm, {}),
         ]
 
         for form_name, form_class, kwargs in forms_to_test:
@@ -194,6 +198,18 @@ class ReCaptchaDataActionTest(TestCase):
             captcha_widget.attrs["data-action"],
             "comments",
             "CommentForm should use 'comments' action",
+        )
+
+    def test_contact_form_has_correct_action(self):
+        """Test that ContactForm has correct reCAPTCHA action."""
+        form = ContactForm()
+        captcha_widget = form.fields["captcha"].widget
+
+        self.assertIn("data-action", captcha_widget.attrs)
+        self.assertEqual(
+            captcha_widget.attrs["data-action"],
+            "contact",
+            "ContactForm should use 'contact' action",
         )
 
 

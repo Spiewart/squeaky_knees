@@ -32,12 +32,6 @@ RUN uv sync --frozen --no-dev
 # Copy project
 COPY . .
 
-# Create staticfiles directory
-RUN mkdir -p /app/staticfiles
-
-# Collect static files
-RUN uv run python manage.py collectstatic --noinput || true
-
 # Expose port
 EXPOSE 8000
 

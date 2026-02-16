@@ -3,7 +3,7 @@
 {% block title %}Squeaky Knees{% endblock %}
 {% block content %}
   <section class="container py-5">
-    <div class="p-5 mb-4 bg-light rounded-3">
+    <div class="px-5 pt-5 pb-3 mb-4 bg-light rounded-3">
       <div class="container-fluid py-3">
         <h1 class="display-5 fw-bold">Squeaky Knees</h1>
         <p class="col-md-10 fs-5">
@@ -13,8 +13,14 @@
         <div class="d-flex flex-wrap gap-2">
           <a class="btn btn-primary btn-lg" href="{% url 'blog_index' %}">Visit the blog</a>
           <a class="btn btn-outline-secondary btn-lg" href="{% url 'about' %}">About the site</a>
-          <a class="btn btn-outline-secondary btn-lg"
-             href="https://github.com/Spiewart/knee-acoustic-emissions">GitHub</a>
+          <a class="btn btn-outline-secondary btn-lg" href="{% url 'contact' %}">Contact</a>
+        </div>
+        <h2 class="h4 mt-4 mb-2">GitHub</h2>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-outline-dark btn-lg"
+             href="https://github.com/Spiewart/squeaky_knees">Squeaky Knees</a>
+          <a class="btn btn-outline-dark btn-lg"
+             href="https://github.com/Spiewart/knee-acoustic-emissions">Knee Acoustics</a>
         </div>
       </div>
     </div>

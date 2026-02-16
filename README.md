@@ -11,9 +11,10 @@ License: MIT
 
 ### Blog & Content
 
-Blog posts are authored in the Wagtail CMS admin (`/cms/`) using a StreamField body that supports rich text blocks and syntax-highlighted code blocks (with a `language` selector). Each post can have a header image, intro text, and tags via django-taggit.
+Blog posts are authored in the Wagtail CMS admin (`/cms/`) using a StreamField body that supports rich text blocks and syntax-highlighted code blocks. Each post can have a header image, intro text, and tags via django-taggit.
 
-- **Threaded comments** -- authenticated users can comment and reply at any depth. Replies are visually indented and rendered recursively. Comments support both rich text and code blocks, serialized as StreamField JSON via a lightweight JS editor.
+- **Code blocks** -- a `CodeBlock` Wagtail StructBlock with an optional `language` field and a `code` textarea. Rendered as `<pre><code class="language-{lang}">` for client-side syntax highlighting. Available in both post bodies (via the CMS editor) and user comments/replies (via the JS block editor).
+- **Threaded comments** -- authenticated users can comment and reply at any depth. Replies are visually indented and rendered recursively. Comments support both rich text and code blocks, serialized as StreamField JSON via a lightweight JS block editor with "Add Text" and "Add Code" buttons, bold/italic/link formatting, and a language selector for code.
 - **Comment moderation** -- all comments require staff approval before appearing. A dedicated moderation queue at `/blog/actions/moderate/` lets staff approve or delete pending comments with search filtering. Bulk approve/unapprove actions are also available in the Django admin.
 - **Email notifications** -- post authors receive an HTML email when a new comment is submitted; commenters are notified when their comment is approved. Sent via Mailgun (Anymail) in production.
 
@@ -183,7 +184,7 @@ squeaky_knees/
 
 ## Deployment
 
-The site runs on a single low-memory DigitalOcean Droplet (< 1 GB RAM). The entire stack -- application, database, cache, and reverse proxy -- runs as four Docker containers managed by Docker Compose.
+The site runs on a DigitalOcean $4/month Droplet (512 MB RAM, 1 vCPU). The entire stack -- application, database, cache, and reverse proxy -- runs as four Docker containers managed by Docker Compose on this single machine.
 
 ### Architecture
 
@@ -191,53 +192,62 @@ The site runs on a single low-memory DigitalOcean Droplet (< 1 GB RAM). The enti
 Internet
   │
   ▼
-Traefik v3  ──  TLS termination (Let's Encrypt) + HTTP→HTTPS redirect
-  │
+Traefik v3.1  ──  TLS termination (Let's Encrypt) + HTTP→HTTPS redirect
+  │                 Config: compose/production/traefik/traefik.yml
   ▼
-Gunicorn  ──  1 worker, 120s timeout (tuned for < 1 GB RAM)
+Gunicorn  ──  1 worker, 120s timeout (tuned for 512 MB RAM)
   │
   ├── PostgreSQL 16  ──  shared_buffers=64MB, max_connections=25
   ├── Redis 7  ──  64MB max, allkeys-lru eviction
   └── AWS S3  ──  static files + media (served directly, not through Django)
 ```
 
+Traefik routes all traffic via file-based configuration (`traefik.yml`). There is no Nginx layer -- Traefik proxies directly to Gunicorn.
+
 ### Container Stack
 
-| Service | Image | Purpose |
-|---------|-------|---------|
-| `web` | `python:3.13-alpine` (via GHCR) | Django/Gunicorn application |
-| `postgres` | `postgres:16` | Database with low-memory tuning |
-| `redis` | `redis:7-alpine` | Cache and session backend (64 MB cap) |
-| `traefik` | `traefik:v3.1` | Reverse proxy, TLS via Let's Encrypt |
+| Service | Image | Purpose | Memory tuning |
+|---------|-------|---------|---------------|
+| `web` | `python:3.13-alpine` (via GHCR) | Django/Gunicorn | 1 worker, Alpine (~60% smaller than slim) |
+| `postgres` | `postgres:16` | Database | `shared_buffers=64MB`, `work_mem=4MB`, `max_connections=25` |
+| `redis` | `redis:7-alpine` | Cache/sessions | `--maxmemory 64mb --maxmemory-policy allkeys-lru` |
+| `traefik` | `traefik:v3.1` | Reverse proxy + TLS | Minimal footprint |
 
-The application image uses Alpine Linux to minimize memory footprint (~60% smaller than Debian slim). Gunicorn runs a single worker to avoid OOM kills on the constrained droplet.
+The `web` container waits for `postgres` and `redis` health checks to pass (`condition: service_healthy`) before starting.
 
 ### CI/CD Pipeline
 
-Two GitHub Actions workflows automate testing and deployment:
+Two GitHub Actions workflows in `.github/workflows/`:
 
-**CI** (`ci.yml`) -- runs on all PRs and pushes to `main`:
+**CI** (`ci.yml`) -- runs on PRs and pushes to `main`:
 
 - Linting via pre-commit (ruff, djLint, django-upgrade)
-- pytest with a PostgreSQL service container, migration checks
+- pytest against a PostgreSQL 18 service container
+- Migration consistency check (`makemigrations --check`)
 
 **Deploy** (`deploy.yml`) -- triggers on pushes to `main`:
 
-1. Builds the Docker image and pushes to GitHub Container Registry (tagged `:latest` and `:<sha>`)
-2. Runs `collectstatic` in CI (uploads to S3 via collectfasta, avoiding resource-constrained droplet)
-3. SCPs the Compose file and Traefik config to the droplet
-4. SSHs into the droplet to pull the new image, run migrations, and restart services
-5. Creates a 1 GB swapfile if absent (OOM protection)
-6. Aggressively prunes old Docker images and build cache to reclaim disk space
-7. Verifies deployment by polling the `/health/` endpoint for HTTP 200
+1. Build the Docker image and push to GitHub Container Registry (`:latest` + `:<sha>` tags)
+2. Run `collectstatic` in CI with AWS credentials (uploads to S3, avoids running on the memory-constrained droplet)
+3. SCP `docker-compose.production.yml` and `compose/production/traefik/` to the droplet
+4. SSH into the droplet and deploy:
+   - Create a 1 GB swapfile if absent (OOM protection)
+   - Stop running containers and prune old images/build cache to free disk space
+   - Pull the new image and start services with `docker compose up -d`
+   - Run migrations with a 10-minute timeout
+5. Verify deployment: wait for container health check, then curl `https://squeakyknees.blog/health/` for HTTP 200
 
 ### Static & Media Files
 
-Static and media files are stored on AWS S3 (`squeaky-knees` bucket) with public-read ACLs and 7-day cache headers. `collectstatic` runs during CI -- not on the droplet -- using collectfasta for incremental uploads. django-compressor handles CSS/JS minification, also backed by S3.
+Static and media files are stored on AWS S3 with public-read ACLs and cache headers. `collectstatic` runs during CI -- not on the droplet -- using collectfasta for incremental uploads. django-compressor handles CSS/JS minification, also backed by S3.
 
-### Key Design Decisions
+### Low-Memory Design Decisions
 
-- **`collectstatic` runs in CI, not on the droplet.** Offloads the S3 upload from the memory-constrained server to GitHub Actions runners.
-- **No Nginx in production.** Traefik handles TLS, HTTP redirects, and proxying directly to Gunicorn.
-- **`AWS_EC2_METADATA_DISABLED=true`** is set during migrations to prevent boto3 from hanging while trying to reach the EC2 metadata service on a non-AWS host.
-- **Swap creation at deploy time.** The deploy script ensures a 1 GB swapfile exists to cushion against OOM during image pulls and migrations.
+Every layer is tuned for the 512 MB RAM constraint:
+
+- **`collectstatic` runs in CI, not on the droplet.** Offloads S3 upload work to GitHub Actions runners.
+- **Alpine base image.** ~60% smaller than Debian slim, reducing pull time and disk usage.
+- **Single Gunicorn worker.** Prevents OOM kills from multiple worker processes.
+- **Stop-before-pull pattern.** The deploy script stops containers and removes old images before pulling new ones, ensuring enough disk/memory for the pull.
+- **1 GB swap at deploy time.** Cushions against OOM spikes during image pulls and migrations.
+- **`AWS_EC2_METADATA_DISABLED=true`** during migrations prevents boto3 from hanging while trying to reach the EC2 metadata service on a non-AWS host.

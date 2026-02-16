@@ -23,7 +23,7 @@ class TestHomeView:
         response = client.get(reverse("home"))
 
         assert response.status_code == 200
-        assert "practical guidance" in response.content.decode().lower()
+        assert "vibroarthrography" in response.content.decode().lower()
         assert any(t.name == "pages/home.html" for t in response.templates)
 
     def test_home_view_shows_content(self, client, blog_index):
@@ -56,7 +56,7 @@ class TestHomeView:
         response = client.get(reverse("home"))
 
         assert response.status_code == 200
-        assert "practical guidance" in response.content.decode().lower()
+        assert "vibroarthrography" in response.content.decode().lower()
 
 
 @pytest.mark.django_db

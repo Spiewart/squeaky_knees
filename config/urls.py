@@ -10,6 +10,8 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 from squeaky_knees.views import blog_view
+from squeaky_knees.views import contact_success_view
+from squeaky_knees.views import contact_view
 from squeaky_knees.views import health_check
 from squeaky_knees.views import home_view
 from squeaky_knees.views import robots_txt_view
@@ -24,6 +26,8 @@ urlpatterns = [
         TemplateView.as_view(template_name="pages/about.html"),
         name="about",
     ),
+    path("contact/", contact_view, name="contact"),
+    path("contact/success/", contact_success_view, name="contact_success"),
     # Sitemap, robots.txt, and RSS feed
     path("sitemap.xml", sitemap_view, name="sitemap"),
     path("robots.txt", robots_txt_view, name="robots"),

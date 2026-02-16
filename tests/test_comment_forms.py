@@ -7,14 +7,13 @@ and use FormHelper with form_tag=False to ensure buttons stay inside form elemen
 
 import json
 
+import pytest
 from django.contrib.auth import get_user_model
-from django.test import Client
 from django.test import RequestFactory
 from django.test import TestCase
+from django.urls import reverse
 
 from squeaky_knees.blog.forms import CommentForm
-from squeaky_knees.blog.models import BlogIndexPage
-from squeaky_knees.blog.models import BlogPage
 
 User = get_user_model()
 
@@ -134,108 +133,88 @@ class CommentFormValidationTest(TestCase):
         self.assertIn("text", form.fields)
 
 
-class BlogCommentTemplateStructureTest(TestCase):
+@pytest.mark.django_db
+class TestBlogCommentTemplateStructure:
     """Test that comment form in blog template has correct structure."""
 
-    def setUp(self):
-        from django.utils import timezone
-
-        self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="test")
-
-        # Create a blog page for testing
-        self.blog_index = BlogIndexPage.add_root(
-            title="Blog",
-            slug="blog",
-        )
-        self.blog_index.save_revision().publish()
-
-        self.blog_page = self.blog_index.add_child(
-            instance=BlogPage(
-                title="Test Post",
-                slug="test-post",
-                date=timezone.now(),
-                intro="Test introduction",
-            ),
-        )
-        self.blog_page.save_revision().publish()
-
-    def test_blog_page_renders(self):
+    def test_blog_page_renders(self, blog_post, client):
         """Test that blog page with comment form loads."""
-        # Skip this test - loading full Wagtail pages is complex in tests
-        # The comment form configuration tests are more important
-        self.skipTest("Wagtail page loading requires full context setup")
+        response = client.get(blog_post.url)
+        assert response.status_code == 200
+        assert b"Test Blog Post" in response.content
 
-    def test_comment_form_section_exists(self):
-        """Test that comment form section exists in blog page."""
-        self.skipTest("Wagtail page loading requires full context setup")
+    def test_comment_form_section_exists(self, blog_post, client):
+        """Test that comments section exists in blog page."""
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        assert "comments-section" in content
+        assert "Comments" in content
 
-    def test_comment_form_button_inside_form(self):
+    def test_comment_form_button_inside_form(self, blog_post, user, client):
         """Test that comment submit button is inside form element."""
-        self.skipTest("Wagtail page loading requires full context setup")
+        client.force_login(user)
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        # The form action resolves to /blog/actions/comment/<id>/
+        comment_url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
+        form_start = content.find(comment_url)
+        assert form_start != -1
+        form_end = content.find("</form>", form_start)
+        form_section = content[form_start:form_end]
+        assert "Submit Comment" in form_section
 
-    def test_comment_form_media_included(self):
-        """Test that comment form.media is rendered."""
-        self.skipTest("Wagtail page loading requires full context setup")
+    def test_comment_form_captcha_included(self, blog_post, user, client):
+        """Test that reCAPTCHA widget is rendered in comment form."""
+        client.force_login(user)
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        assert "g-recaptcha" in content or "recaptcha" in content.lower()
 
-    def test_comment_form_csrf_token(self):
+    def test_comment_form_csrf_token(self, blog_post, user, client):
         """Test that CSRF token is present in comment form."""
-        self.skipTest("Wagtail page loading requires full context setup")
+        client.force_login(user)
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        assert "csrfmiddlewaretoken" in content
 
-    def test_comment_submission_requires_authentication(self):
-        """Test that comment submission requires user to be logged in."""
-        self.skipTest("Wagtail page loading requires full context setup")
+    def test_anonymous_user_sees_login_prompt(self, blog_post, client):
+        """Test that anonymous users see login prompt instead of comment form."""
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        assert "Log in" in content
+        assert "Submit Comment" not in content
 
 
-class CommentFormSubmissionTest(TestCase):
+@pytest.mark.django_db
+class TestCommentFormSubmission:
     """Test that comment form submissions work correctly."""
 
-    def setUp(self):
-        from django.utils import timezone
-
-        self.client = Client()
-        self.user = User.objects.create_user(
-            username="commenter",
-            email="commenter@example.com",
-            password="testpass123",
-        )
-
-        # Create a blog page
-        self.blog_index = BlogIndexPage.add_root(
-            title="Blog",
-            slug="blog",
-        )
-        self.blog_index.save_revision().publish()
-
-        self.blog_page = self.blog_index.add_child(
-            instance=BlogPage(
-                title="Test Post",
-                slug="test-post",
-                date=timezone.now(),
-                intro="Test introduction",
-            ),
-        )
-        self.blog_page.save_revision().publish()
-
-    def test_unauthenticated_user_cannot_comment(self):
+    def test_unauthenticated_user_cannot_comment(self, blog_post, client):
         """Test that unauthenticated users cannot submit comments."""
-        self.skipTest("Wagtail page loading requires full context setup")
+        url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
+        response = client.post(url, {"text": "Test comment"})
+        assert response.status_code == 302
+        assert "/accounts/login/" in response.url
 
-    def test_authenticated_user_can_access_comment_form(self):
+    def test_authenticated_user_can_access_comment_form(self, blog_post, user, client):
         """Test that authenticated users can access comment form."""
-        self.skipTest("Wagtail page loading requires full context setup")
+        client.force_login(user)
+        response = client.get(blog_post.url)
+        content = response.content.decode()
+        comment_url = reverse("blog:add_comment", kwargs={"page_id": blog_post.id})
+        assert comment_url in content
+        assert "Submit Comment" in content
 
-    def test_comment_form_request_parameter_passed(self):
+    def test_comment_form_request_parameter_passed(self, user):
         """Test that request is properly passed to CommentForm."""
         factory = RequestFactory()
         request = factory.post("/")
-        request.user = self.user
+        request.user = user
         request.META["REMOTE_ADDR"] = "127.0.0.1"
 
-        # CommentForm should accept request parameter
         form = CommentForm(request=request)
-        self.assertIsNotNone(form)
-        self.assertEqual(form.request, request)
+        assert form is not None
+        assert form.request is request
 
 
 class RateLimitingTest(TestCase):
