@@ -25,7 +25,6 @@ class CodeBlock(StructBlock):
         help_text="Programming language (e.g., python, javascript, html)",
         required=False,
     )
-    content = TextBlock(required=False, help_text="Legacy code content")
     code = TextBlock(help_text="Your code here")
 
     class Meta:

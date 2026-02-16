@@ -9,44 +9,35 @@ License: MIT
 
 ## Features
 
-### Blog Application
-- **Wagtail CMS Integration**: Powerful content management system for creating and managing blog posts
-- **Rich Text Editor**: Create engaging blog posts with images, formatting, and embedded media
-- **Responsive Images**: Automatic image optimization and responsive design support
-- **Tags and Categories**: Organize blog posts with tags for easy discovery
-- **Comment System**: Registered users can leave comments on blog posts
-- **Comment Moderation**: Admin approval workflow for all comments before publication
-- **Nested Comment Threads**: Reply to comments with threaded discussions
-- **User Authentication**: Built-in user registration and authentication system
+### Blog & Content
 
-### Content Management
-- **Blog Posts**: Create and publish articles with featured images, tags, and rich content
-- **Admin Interface**: Access the Wagtail admin at `/cms/` or Django admin at `/admin/`
-- **Media Management**: Upload and manage images through the Wagtail media library
+Blog posts are authored in the Wagtail CMS admin (`/cms/`) using a StreamField body that supports rich text blocks and syntax-highlighted code blocks (with a `language` selector). Each post can have a header image, intro text, and tags via django-taggit.
 
-### Discovery and SEO
-- **Blog Search**: Dedicated search page with input sanitization
-- **Pagination**: Blog index supports page-based navigation
-- **RSS Feed**: Subscribe at `/feed.xml`
-- **Sitemap and Robots**: `/sitemap.xml` and `/robots.txt` for crawlers
+- **Threaded comments** -- authenticated users can comment and reply at any depth. Replies are visually indented and rendered recursively. Comments support both rich text and code blocks, serialized as StreamField JSON via a lightweight JS editor.
+- **Comment moderation** -- all comments require staff approval before appearing. A dedicated moderation queue at `/blog/actions/moderate/` lets staff approve or delete pending comments with search filtering. Bulk approve/unapprove actions are also available in the Django admin.
+- **Email notifications** -- post authors receive an HTML email when a new comment is submitted; commenters are notified when their comment is approved. Sent via Mailgun (Anymail) in production.
 
-### User Features
-- **User Registration**: Users can create accounts to participate in discussions
-- **Comment System**: Authenticated users can comment on blog posts
-- **Profile Management**: Users can manage their profiles and view their activity
+### Discovery & SEO
 
-### Safety and Anti-Abuse
-- **reCAPTCHA v3**: Protected signup and comment submission
-- **Rate Limiting**: Limits on comment and signup actions
-- **Input Validation and Sanitization**: XSS-safe HTML handling and length checks
-- **Security Headers**: Protective headers on all responses
-- **Custom Error Pages**: Styled 403/404/500 templates
-- **Comment Notifications**: Email alerts for new comments and approvals
-- **Logging and Error Tracking**: Structured logging for app and security events
+- **Full-text search** -- Wagtail's search backend indexes post titles, intros, and body content. Accessible at `/blog/actions/search/?query=...` with query sanitization (min 2 chars, max 200, stripped angle brackets/quotes).
+- **Tag search** -- clicking a tag anywhere on the site filters posts by tag slug. The homepage displays all tags from published posts as clickable links.
+- **Pagination** -- the blog index paginates at 10 posts per page with full Bootstrap navigation (first/prev/numbered/next/last).
+- **RSS feed** -- hand-written RSS 2.0 XML at `/feed.xml` with the latest 20 posts including `content:encoded` (full body) and `<category>` tags.
+- **Sitemap & robots.txt** -- `/sitemap.xml` includes the blog index and all published posts with `lastmod` timestamps. `/robots.txt` allows all crawlers and disallows admin paths. Both are cached.
+
+### Safety & Anti-Abuse
+
+- **reCAPTCHA v3** on comment and signup forms. Reply forms fetch tokens asynchronously via the Google reCAPTCHA JS API.
+- **Rate limiting** -- cache-backed limiter keyed by user ID (authenticated) or IP (anonymous). Comments are capped at 10 per hour per user.
+- **Input sanitization** -- `sanitize_html()` strips `<script>`, event handlers, `<iframe>`, and `<style>` tags. Code blocks are capped at 10,000 characters; comment text at 5,000 (after stripping HTML for counting).
+- **Security headers** -- custom middleware adds `X-Content-Type-Options: nosniff`, `X-XSS-Protection: 1; mode=block`, and `X-Frame-Options: DENY`. Production uses HSTS, secure cookies (`__Secure-` prefix), and Argon2 password hashing.
+- **Custom error pages** -- styled 403, 404, and 500 templates.
+- **Sentry** integration for error tracking and structured logging.
 
 ## Getting Started
 
 ### Prerequisites
+
 - Python 3.13 or higher
 - PostgreSQL (for production) or SQLite (for development)
 - pip or uv package manager
@@ -165,7 +156,7 @@ You must set the DSN url in production.
 
 ## Project Structure
 
-```
+```text
 squeaky_knees/
 ├── squeaky_knees/
 │   ├── blog/           # Blog application with Wagtail models
@@ -180,14 +171,73 @@ squeaky_knees/
 ## Technology Stack
 
 - **Framework**: Django 5.2
-- **CMS**: Wagtail 6.4
-- **Authentication**: Django Allauth
+- **CMS**: Wagtail
+- **Authentication**: Django Allauth (username login, mandatory email verification, MFA support)
 - **Frontend**: Bootstrap 5
-- **Database**: PostgreSQL (production), SQLite (development)
+- **Database**: PostgreSQL 16 (production), SQLite (development)
+- **Cache**: Redis 7 (production), local memory (development)
 - **Image Processing**: Pillow, Wagtail Images
 - **Tags**: django-taggit
+- **Email**: Mailgun via django-anymail
+- **Package Manager**: uv
 
 ## Deployment
 
-The following details how to deploy this application.
-## TODO: describe final deployment implementation once its working.
+The site runs on a single low-memory DigitalOcean Droplet (< 1 GB RAM). The entire stack -- application, database, cache, and reverse proxy -- runs as four Docker containers managed by Docker Compose.
+
+### Architecture
+
+```text
+Internet
+  │
+  ▼
+Traefik v3  ──  TLS termination (Let's Encrypt) + HTTP→HTTPS redirect
+  │
+  ▼
+Gunicorn  ──  1 worker, 120s timeout (tuned for < 1 GB RAM)
+  │
+  ├── PostgreSQL 16  ──  shared_buffers=64MB, max_connections=25
+  ├── Redis 7  ──  64MB max, allkeys-lru eviction
+  └── AWS S3  ──  static files + media (served directly, not through Django)
+```
+
+### Container Stack
+
+| Service | Image | Purpose |
+|---------|-------|---------|
+| `web` | `python:3.13-alpine` (via GHCR) | Django/Gunicorn application |
+| `postgres` | `postgres:16` | Database with low-memory tuning |
+| `redis` | `redis:7-alpine` | Cache and session backend (64 MB cap) |
+| `traefik` | `traefik:v3.1` | Reverse proxy, TLS via Let's Encrypt |
+
+The application image uses Alpine Linux to minimize memory footprint (~60% smaller than Debian slim). Gunicorn runs a single worker to avoid OOM kills on the constrained droplet.
+
+### CI/CD Pipeline
+
+Two GitHub Actions workflows automate testing and deployment:
+
+**CI** (`ci.yml`) -- runs on all PRs and pushes to `main`:
+
+- Linting via pre-commit (ruff, djLint, django-upgrade)
+- pytest with a PostgreSQL service container, migration checks
+
+**Deploy** (`deploy.yml`) -- triggers on pushes to `main`:
+
+1. Builds the Docker image and pushes to GitHub Container Registry (tagged `:latest` and `:<sha>`)
+2. Runs `collectstatic` in CI (uploads to S3 via collectfasta, avoiding resource-constrained droplet)
+3. SCPs the Compose file and Traefik config to the droplet
+4. SSHs into the droplet to pull the new image, run migrations, and restart services
+5. Creates a 1 GB swapfile if absent (OOM protection)
+6. Aggressively prunes old Docker images and build cache to reclaim disk space
+7. Verifies deployment by polling the `/health/` endpoint for HTTP 200
+
+### Static & Media Files
+
+Static and media files are stored on AWS S3 (`squeaky-knees` bucket) with public-read ACLs and 7-day cache headers. `collectstatic` runs during CI -- not on the droplet -- using collectfasta for incremental uploads. django-compressor handles CSS/JS minification, also backed by S3.
+
+### Key Design Decisions
+
+- **`collectstatic` runs in CI, not on the droplet.** Offloads the S3 upload from the memory-constrained server to GitHub Actions runners.
+- **No Nginx in production.** Traefik handles TLS, HTTP redirects, and proxying directly to Gunicorn.
+- **`AWS_EC2_METADATA_DISABLED=true`** is set during migrations to prevent boto3 from hanging while trying to reach the EC2 metadata service on a non-AWS host.
+- **Swap creation at deploy time.** The deploy script ensures a 1 GB swapfile exists to cushion against OOM during image pulls and migrations.
