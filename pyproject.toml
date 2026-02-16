@@ -140,6 +140,7 @@ force-single-line = true
 # Test files use unittest/Django TestCase assertions, not pytest style
 "tests/**/*.py" = ["PT"]
 "**/tests/**/*.py" = ["PT"]
+"scripts/**/*.py" = ["T201"]  # CLI scripts use print for output
 
 [dependency-groups]
 dev = [
