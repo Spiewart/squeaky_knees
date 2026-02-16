@@ -1,1 +1,187 @@
 {% extends "base.html" %}
+
+{% block title %}About Squeaky Knees{% endblock %}
+{% block content %}
+  <section class="container-fluid py-5">
+    <div class="p-5 mb-0 bg-light rounded-3">
+      <div class="container-fluid py-2">
+        <h1 class="display-5 fw-bold">About Squeaky Knees</h1>
+        <p class="fs-5 mb-0">
+          Squeaky Knees is my professional and personal blog, mostly about
+          <a class="text-decoration-underline"
+             href="{% url 'blog:search' %}?tag={{ 'osteoarthritis'|urlencode }}">osteoarthritis</a>
+          (OA) of the
+          <a class="text-decoration-underline"
+             href="{% url 'blog:search' %}?tag={{ 'knee'|urlencode }}">knee</a>.
+          I'm a practicting
+          <a class="text-decoration-underline"
+             href="{% url 'blog:search' %}?tag={{ 'rheumatology'|urlencode }}">rheumatologist</a>,
+          knee OA researcher, and have knee OA myself. This blog is about knee OA research,
+          both my own and others, living with knee OA and the things I've learned along the way, some of
+          my personal passions, and probably some over-shared personal anecdotes and observations.
+        </p>
+      </div>
+    </div>
+    <div class="container-fluid pt-2 pb-1">
+      <!-- Research Section -->
+      <div class="mb-5">
+        <h2 class="h3 mb-4 text-center">Research</h2>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">
+                  Osteoarthritis
+                  <a class="text-decoration-underline"
+                     href="{% url 'blog:search' %}?tag={{ 'research'|urlencode }}">Research</a>
+                </h3>
+                <p class="mb-0">
+                  Highlights on osteoarthritis: what's new in the field and key takeaways from new
+                  <a class="text-decoration-underline"
+                     href="{% url 'blog:search' %}?tag={{ 'publication'|urlencode }}">publications</a>.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Knee Acoustics</h3>
+                <p class="mb-0">
+                  Reviews, updates, and observations on research (my own and others) into knee sounds and vibrations.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Living with Knee OA Section -->
+      <div class="mb-5">
+        <h2 class="h3 mb-4 text-center">Living with Knee OA</h2>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Exercise with Knee OA</h3>
+                <p class="mb-0">
+                  Exercise is very important for people with knee OA and I wouldn't function without it. Tips, strategies, and reflections on exercising with knee OA.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Cycling with Knee OA</h3>
+                <p class="mb-0">
+                  I love cycling and it works for knee OA.
+                  <a class="text-decoration-underline"
+                     href="{% url 'blog:search' %}?tag={{ 'bikefit'|urlencode }}">Bike fit</a>,
+                  cadence, and training tweaks that can make
+                  <a class="text-decoration-underline"
+                     href="{% url 'blog:search' %}?tag={{ 'cycling'|urlencode }}">cycling</a>
+                  more comfortable while keeping knees happy.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Knee OA Hacks</h3>
+                <p class="mb-0">
+                  The human body is capabable of incredible resilience. Real-world strategies I've learned for high-functioning while living with knee OA.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Non-OA Interests Section -->
+      <div class="mb-5">
+        <h2 class="h3 mb-4 text-center">Non-OA Interests</h2>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Programming</h3>
+                <p class="mb-0">Code, projects, and technical explorations. Please give me feedback.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">AI Bandwagon</h3>
+                <p class="mb-0">How I'm using AI in my work and life. I was once an unbeliever...</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h3 class="h5">Miscellaneous</h3>
+                <p class="mb-0">
+                  Random observations, <a class="text-decoration-underline"
+    href="{% url 'blog:search' %}?tag={{ 'personal'|urlencode }}">personal</a>
+                  reflections, and other musings.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container-fluid py-1">
+      <div class="row g-4">
+        <div class="col-12 col-lg-8">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h2 class="h4">Why I write</h2>
+              <p>
+                I started Squeaky Knees to bridge the gap between dense
+                research
+                papers and everyday decisions. My goal is to highlight practical takeaways,
+                share
+                personal
+                learnings, and point to resources that are actually useful.
+              </p>
+              <p class="mb-0">
+                If you are living with
+                knee
+                OA
+                or supporting someone who is, I hope this site helps you move with more
+                clarity and less worry.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            <div class="card-body">
+              <h2 class="h4">What to expect</h2>
+              <ul class="mb-0">
+                <li>
+                  Plain-language summaries of new
+                  publications
+                </li>
+                <li>Actionable guidance for daily life</li>
+                <li>
+                  Exercise
+                  and
+                  cycling
+                  tips that respect your knees
+                </li>
+                <li>
+                  Occasional
+                  personal
+                  reflections
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock content %}

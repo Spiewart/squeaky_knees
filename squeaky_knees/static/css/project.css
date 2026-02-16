@@ -1,5 +1,234 @@
 /* These styles are generated from project.scss. */
 
+/* Navy blue and saffron yellow color scheme */
+:root {
+  --sk-navy: #001f3f;
+  --sk-saffron: #FFD700;
+}
+
+/* Navbar styling */
+.navbar {
+  background-color: var(--sk-navy) !important;
+  border-bottom: 3px solid var(--sk-saffron);
+}
+
+.navbar.bg-light {
+  background-color: var(--sk-navy) !important;
+}
+
+.navbar-light {
+  --bs-navbar-color: white;
+  --bs-navbar-hover-color: var(--sk-saffron);
+  --bs-navbar-disabled-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-brand {
+  color: var(--sk-saffron) !important;
+  font-weight: bold;
+}
+
+.nav-link {
+  color: white !important;
+  transition: color 0.15s ease-in-out;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: var(--sk-saffron) !important;
+}
+
+.nav-link.active {
+  color: var(--sk-saffron) !important;
+}
+
+/* Section heading styles */
+.container-fluid > div > h2.h3 {
+  background-color: var(--sk-navy);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 0.375rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+/* Card accent border */
+.card {
+  border-left: 4px solid var(--sk-saffron);
+}
+
+/* Make content links styled as navy text with saffron hover */
+.container a:not(.btn):not(.nav-link):not(.navbar-brand) {
+  color: var(--sk-navy);
+  text-decoration: underline;
+  transition: color 0.15s ease-in-out;
+}
+
+.container a:not(.btn):not(.nav-link):not(.navbar-brand):hover,
+.container a:not(.btn):not(.nav-link):not(.navbar-brand):focus {
+  color: var(--sk-saffron);
+  text-decoration: underline;
+}
+
+.btn-outline-primary {
+  color: var(--sk-saffron);
+  border-color: var(--sk-navy);
+  background-color: var(--sk-navy);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+/* Secondary button styling */
+.btn-secondary {
+  background-color: var(--sk-navy);
+  border-color: var(--sk-navy);
+  color: var(--sk-saffron);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+.btn-outline-secondary {
+  color: var(--sk-saffron);
+  border-color: var(--sk-navy);
+  background-color: var(--sk-navy);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+/* Link buttons */
+.btn-link {
+  color: var(--sk-saffron);
+  background-color: var(--sk-navy);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.btn-link:hover,
+.btn-link:focus {
+  color: var(--sk-saffron);
+  background-color: #000d1f;
+}
+
+/* Override text-danger to use saffron yellow */
+.text-danger {
+  color: var(--sk-saffron) !important;
+}
+
+/* Badge styling */
+.badge {
+  background-color: var(--sk-navy);
+  color: white;
+}
+
+.badge.bg-info {
+  background-color: var(--sk-navy) !important;
+  color: white !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--sk-navy) !important;
+  color: white !important;
+}
+
+/* Form controls */
+.form-control {
+  color: var(--sk-navy) !important;
+  border-color: var(--sk-navy);
+}
+
+.form-control::placeholder {
+  color: var(--sk-navy) !important;
+  opacity: 1;
+}
+
+.form-control:focus {
+  color: var(--sk-navy) !important;
+  border-color: var(--sk-navy);
+  box-shadow: 0 0 0 0.2rem rgba(0, 31, 63, 0.25);
+}
+
+textarea.form-control {
+  color: var(--sk-navy) !important;
+}
+
+textarea.form-control::placeholder {
+  color: var(--sk-navy) !important;
+}
+
+/* Search form */
+.input-group .form-control {
+  color: var(--sk-navy) !important;
+}
+
+.input-group .form-control::placeholder {
+  color: var(--sk-navy) !important;
+  opacity: 1;
+}
+
+/* Navbar search form styling */
+nav.navbar .input-group .form-control {
+  background-color: white !important;
+  color: var(--sk-navy) !important;
+  border-color: var(--sk-navy) !important;
+}
+
+nav.navbar .input-group .form-control::placeholder {
+  color: var(--sk-navy) !important;
+  opacity: 0.7 !important;
+}
+
+/* Comment styling */
+.comment-card {
+  border-left: 4px solid var(--sk-saffron);
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+/* Alert styling */
+.alert-info {
+  background-color: rgba(0, 31, 63, 0.1);
+  border-color: var(--sk-navy);
+  color: var(--sk-navy);
+}
+
+/* Button styling with navy background and saffron text */
+.btn-primary {
+  background-color: var(--sk-navy);
+  border-color: var(--sk-navy);
+  color: var(--sk-saffron);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+  box-shadow: 0 0 0 0.25rem rgba(0, 31, 63, 0.5);
+}
+
+.btn-outline-primary {
+  color: var(--sk-saffron);
+  border-color: var(--sk-navy);
+  background-color: var(--sk-navy);
+}
+
 /* Code styling for rich text */
 code {
   background-color: #f4f4f4;
@@ -45,13 +274,17 @@ pre code {
   border-color: #eed3d7;
 }
 
-/* Comment thread styles */
-.comment-card {
-  border-left: 4px solid #dee2e6;
-}
-
 .comment-timestamp {
   font-size: 0.85rem;
+  color: var(--sk-navy) !important;
+}
+
+.text-muted {
+  color: var(--sk-navy) !important;
+}
+
+.card-subtitle {
+  color: var(--sk-navy) !important;
 }
 
 .comment-block-input {
@@ -64,6 +297,83 @@ pre code {
 
 .reply-form-hidden {
   display: none;
-  border-left: 3px solid #e9ecef;
+  border-left: 3px solid var(--sk-saffron);
   padding-left: 0.75rem;
+}
+
+/* Additional form-related styles */
+.form-label {
+  color: var(--sk-navy);
+  font-weight: 500;
+}
+
+.input-group .btn {
+  color: var(--sk-saffron);
+  background-color: var(--sk-navy);
+  border-color: var(--sk-navy);
+}
+
+.input-group .btn:hover,
+.input-group .btn:focus {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+/* Pagination and navigation */
+.pagination .page-link {
+  color: var(--sk-saffron);
+  background-color: var(--sk-navy);
+  border-color: var(--sk-navy);
+}
+
+.pagination .page-link:hover {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+.pagination .page-link.active {
+  background-color: #000d1f;
+  border-color: #000d1f;
+  color: var(--sk-saffron);
+}
+
+/* Search form */
+.input-group .form-control {
+  border-color: var(--sk-navy);
+  color: var(--sk-navy);
+}
+
+.input-group .form-control::placeholder {
+  color: var(--sk-navy);
+  opacity: 0.7;
+}
+
+.form-control {
+  color: var(--sk-navy);
+}
+
+.form-control::placeholder {
+  color: var(--sk-navy);
+  opacity: 0.7;
+}
+
+.form-control:focus {
+  color: var(--sk-navy);
+}
+
+/* Horizontal rule styling */
+hr {
+  border-top: 2px solid var(--sk-navy);
+  opacity: 1;
+}
+
+/* Utility text colors */
+.text-primary {
+  color: var(--sk-navy) !important;
+}
+
+.bg-light {
+  background-color: rgba(255, 215, 0, 0.15) !important;
 }

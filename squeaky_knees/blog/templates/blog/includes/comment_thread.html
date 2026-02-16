@@ -12,7 +12,7 @@ This template displays a single comment and all its direct replies.
         <div>
           <h6 class="card-subtitle mb-2 text-muted">
             <strong>{{ comment.author.username }}</strong>
-            {% if comment.is_reply %}<span class="badge bg-info">Reply</span>{% endif %}
+            {% if comment.is_reply %}<span class="badge bg-info">Replied</span>{% endif %}
           </h6>
           <p class="card-subtitle mb-2 text-muted comment-timestamp">{{ comment.created|date:"F d, Y H:i" }}</p>
         </div>
