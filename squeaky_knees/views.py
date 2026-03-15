@@ -99,7 +99,7 @@ def blog_view(request):
     from squeaky_knees.blog.models import BlogIndexPage
 
     blog_index = BlogIndexPage.objects.live().public().first()
-    if blog_index and blog_index.url:
+    if blog_index:
         return blog_index.serve(request)
 
     return render(
