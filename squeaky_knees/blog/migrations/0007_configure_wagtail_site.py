@@ -25,7 +25,17 @@ def configure_site(apps, schema_editor):
     if site:
         site.root_page = root_page
         site.site_name = "Squeaky Knees"
+        site.is_default_site = True
         site.save()
+    else:
+        # No Site exists — create one
+        Site.objects.create(
+            hostname="squeakyknees.blog",
+            port=443,
+            site_name="Squeaky Knees",
+            root_page=root_page,
+            is_default_site=True,
+        )
 
     # Now safe to delete the default "Welcome to your new Wagtail site!" page
     Page.objects.filter(depth=2, slug="home").delete()
