@@ -31,7 +31,7 @@ def configure_site(apps, schema_editor):
         # No Site exists — create one
         Site.objects.create(
             hostname="squeakyknees.blog",
-            port=443,
+            port=80,
             site_name="Squeaky Knees",
             root_page=root_page,
             is_default_site=True,
