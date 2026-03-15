@@ -43,14 +43,15 @@ urlpatterns = [
     path("documents/", include(wagtaildocs_urls)),
     # Blog app actions (comment submission, etc.)
     path("blog/actions/", include("squeaky_knees.blog.urls", namespace="blog")),
-    # Blog index page (Django view)
+    # Blog index (named URL + fallback when no BlogIndexPage exists)
     path("blog/", blog_view, name="blog_index"),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
     # Wagtail pages - place at end to catch remaining URLs
-    path("blog/", include(wagtail_urls)),
+    # Mounted at root so Wagtail's generated URLs (e.g. /blog/) match Django's routing.
+    path("", include(wagtail_urls)),
 ]
 
 
