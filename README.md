@@ -84,14 +84,17 @@ Blog posts are authored in the Wagtail CMS admin (`/cms/`) using a StreamField b
 
 ### Creating Your First Blog
 
-1. Access the Wagtail admin interface at `http://localhost:8000/cms/`
+After running migrations, the Wagtail site is configured with a clean root page (no default "Welcome" placeholder). Create your content pages in the Wagtail admin:
+
+1. Access Wagtail admin at `http://localhost:8000/cms/`
 2. Log in with your superuser credentials
-3. Navigate to **Pages** in the sidebar
-4. Create a **Blog Index Page** as a child of the home page
-5. Add a site under settings > sites and nest under the Blog Index Page (ensures correct routing)
-6. Under the Blog Index Page, create **Blog Page** instances for individual posts
-7. Add featured images, tags, and rich content to your blog posts
-8. Publish your pages to make them visible on the site
+3. Navigate to **Pages** — you'll see the Root page
+4. Create a **Blog Index Page** as a child of Root (slug: `blog`) → `/blog/`
+5. Under the Blog Index Page, create **Blog Page** instances for individual posts
+6. Add featured images, tags, and rich content to your blog posts
+7. Publish your pages to make them visible on the site
+
+The homepage (`/`) is handled by a Django view, not a Wagtail page. The site root is already configured by the migration — no manual site setup needed.
 
 ### Useful Endpoints
 
