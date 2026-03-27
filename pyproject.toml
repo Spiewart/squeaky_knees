@@ -196,7 +196,7 @@ dependencies = [
     "rcssmin==1.2.2",
     "redis==7.1.0",
     "sentry-sdk==2.50.0",
-    "wagtail==6.4.2",
+    "wagtail==7.2.1",
     "django-taggit==6.1.0",
     "django-recaptcha==4.0.0",
 ]
