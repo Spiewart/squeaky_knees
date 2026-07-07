@@ -29,12 +29,19 @@ FROM python:3.13-alpine
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    UV_NO_SYNC=1 \
+    UV_PROJECT_ENVIRONMENT=/app/.venv
 
 # Runtime libraries only: libpq for psycopg, gettext for i18n
 RUN apk add --no-cache \
     libpq \
     gettext
+
+# uv is needed at runtime because deploy runs "uv run python manage.py
+# migrate" inside the container. UV_NO_SYNC makes uv use the prebuilt
+# venv as-is instead of re-syncing (which would pull dev deps at startup).
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
