@@ -139,7 +139,7 @@ def search_blog(request):
             query_string = form.cleaned_data["query"]
 
             # Search using Wagtail's search API
-            results = BlogPage.objects.live().search(query_string)
+            results = BlogPage.objects.live().public().search(query_string)
 
     context = {
         "form": form,

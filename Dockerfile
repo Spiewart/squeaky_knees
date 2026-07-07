@@ -1,40 +1,59 @@
-# Pull base image - Alpine for minimal memory footprint
-# Alpine reduces image size by ~60% compared to slim, critical for low-memory environments
-FROM python:3.13-alpine
+# ── Builder stage ─────────────────────────────────────────────────────────────
+# Compiles psycopg[c] and installs the venv. Build tools stay out of the
+# runtime image, which keeps it small for the low-memory Droplet.
+FROM python:3.13-alpine AS builder
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
-# Install system dependencies - Alpine uses apk instead of apt
-# PostgreSQL dev libraries needed for psycopg PostgreSQL adapter
+# Build dependencies (Alpine): compiler + PostgreSQL/ffi headers
 RUN apk add --no-cache \
     build-base \
     postgresql-dev \
-    gettext \
-    libffi-dev \
-    && rm -rf /var/cache/apk/*
+    libffi-dev
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# Set work directory
 WORKDIR /app
 
-# Copy dependency files
+# Install dependencies into /app/.venv (cached layer: only re-runs when
+# pyproject.toml or uv.lock change, not on every code edit)
 COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
 
-# Install dependencies
-RUN uv sync --frozen --no-dev
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM python:3.13-alpine
 
-# Copy project
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+# Runtime libraries only: libpq for psycopg, gettext for i18n
+RUN apk add --no-cache \
+    libpq \
+    gettext
+
+WORKDIR /app
+
+# Copy the prepared virtualenv, then the project
+COPY --from=builder /app/.venv /app/.venv
 COPY . .
 
-# Expose port
 EXPOSE 8000
 
-# Run gunicorn with single worker for low-memory environments
-# Use 1 worker for droplets with <1GB RAM to avoid OOM kills
-CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "config.wsgi:application"]
+# Single worker for <1GB RAM droplets, but with threads so one slow
+# request (e.g. a Mailgun API call) doesn't block the whole site.
+# --max-requests recycles the worker periodically to cap memory growth;
+# --worker-tmp-dir /dev/shm avoids disk-backed heartbeat stalls.
+CMD ["gunicorn", \
+    "--bind", "0.0.0.0:8000", \
+    "--workers", "1", \
+    "--threads", "4", \
+    "--worker-tmp-dir", "/dev/shm", \
+    "--max-requests", "1000", \
+    "--max-requests-jitter", "100", \
+    "--timeout", "120", \
+    "config.wsgi:application"]

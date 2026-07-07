@@ -1,5 +1,6 @@
 """Views for sitemap, robots.txt, RSS feed, contact, and health check."""
 
+from anymail.exceptions import AnymailError
 from django.conf import settings
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -14,6 +15,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.cache import cache_page
 
 
+@cache_page(60 * 60)  # Cache for 1 hour
 def sitemap_view(request):
     """Generate sitemap.xml for search engines."""
 
@@ -47,6 +49,7 @@ def robots_txt_view(request):
     return HttpResponse(txt_content, content_type="text/plain")
 
 
+@cache_page(60 * 60)  # Cache for 1 hour
 def rss_feed_view(request):
     """Generate RSS feed for blog posts."""
     from squeaky_knees.blog.models import BlogPage
@@ -64,6 +67,10 @@ def rss_feed_view(request):
     return HttpResponse(xml_content, content_type="application/rss+xml")
 
 
+# 5-minute cache. Safe with logged-in users: the session middleware adds
+# "Vary: Cookie" (base.html reads messages), so each session gets its own
+# cache entry and anonymous visitors share one.
+@cache_page(60 * 5)
 def home_view(request):
     """Homepage with latest post excerpt and tag search links."""
     from squeaky_knees.blog.models import BlogPage
@@ -137,7 +144,10 @@ def contact_view(request):
                     html_message=html_message,
                     fail_silently=False,
                 )
-            except OSError:
+            except (OSError, AnymailError):
+                # OSError covers SMTP failures; AnymailError covers the
+                # Mailgun HTTP API used in production (not an OSError, so
+                # it would otherwise bubble up as a 500).
                 msg = (
                     "Sorry, there was a problem sending your message."
                     " Please try again later."

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load static wagtailcore_tags %}
+{% load static wagtailcore_tags wagtailimages_tags %}
 
 {% block title %}{{ page.title }}{% endblock %}
 {% block content %}
@@ -13,19 +13,17 @@
         {% if blogpages %}
           {% for post in blogpages %}
             <div class="card mb-4">
-              {% if post.specific.header_image %}
-                <img src="{{ post.specific.header_image.file.url }}"
-                     class="card-img-top"
-                     alt="{{ post.title }}" />
+              {% if post.header_image %}
+                {% image post.header_image fill-800x450 class="card-img-top" alt=post.title %}
               {% endif %}
               <div class="card-body">
                 <h2 class="card-title">
                   <a href="{% pageurl post %}">{{ post.title }}</a>
                 </h2>
                 <p class="text-muted">
-                  <small>{{ post.specific.date }}</small>
+                  <small>{{ post.date }}</small>
                 </p>
-                {% if post.specific.intro %}<p class="card-text">{{ post.specific.intro }}</p>{% endif %}
+                {% if post.intro %}<p class="card-text">{{ post.intro }}</p>{% endif %}
                 <a href="{% pageurl post %}" class="btn btn-primary">Read More</a>
               </div>
             </div>

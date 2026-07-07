@@ -12,9 +12,6 @@
             <link>{{ site_url }}{{ post.url }}</link>
             <guid>{{ site_url }}{{ post.url }}</guid>
             <pubDate>{{ post.date|date:"r" }}</pubDate>
-            {% if post.owner %}
-            <author>{{ post.owner.email }} ({{ post.owner.username }})</author>
-            {% endif %}
             <description>{{ post.intro }}</description>
             <content:encoded><![CDATA[
                 {{ post.intro }}

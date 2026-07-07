@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load static wagtailcore_tags crispy_forms_tags %}
+{% load static wagtailcore_tags wagtailimages_tags crispy_forms_tags %}
 
 {% block title %}{{ page.title }}{% endblock %}
 {% block content %}
@@ -9,9 +9,7 @@
       <div class="col-lg-8 mx-auto">
         <article>
           {% if page.header_image %}
-            <img src="{{ page.header_image.file.url }}"
-                 class="img-fluid mb-4"
-                 alt="{{ page.title }}" />
+            {% image page.header_image width-1000 class="img-fluid mb-4" alt=page.title %}
           {% endif %}
           <h1>{{ page.title }}</h1>
           <p class="text-muted">
@@ -19,7 +17,10 @@
           </p>
           {% if page.tags.all %}
             <div class="mb-3">
-              {% for tag in page.tags.all %}<span class="badge bg-secondary">{{ tag }}</span>{% endfor %}
+              {% for tag in page.tags.all %}
+                <a href="{% url 'blog:search' %}?tag={{ tag.slug|urlencode }}"
+                   class="badge bg-secondary text-decoration-none">{{ tag }}</a>
+              {% endfor %}
             </div>
           {% endif %}
           <div class="lead">{{ page.intro }}</div>

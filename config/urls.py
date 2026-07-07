@@ -18,6 +18,18 @@ from squeaky_knees.views import robots_txt_view
 from squeaky_knees.views import rss_feed_view
 from squeaky_knees.views import sitemap_view
 
+# URL resolution order matters — Django stops at the FIRST match:
+#
+#   1. Explicit Django views ("/", /about/, /contact/, /blog/, admin, etc.)
+#      win over Wagtail pages with the same slug. A Wagtail page with slug
+#      "about" would be unreachable — pick slugs that don't collide.
+#   2. path("blog/", blog_view) matches ONLY exactly /blog/. Children like
+#      /blog/my-post/ fall through to the Wagtail catch-all below.
+#   3. path("", include(wagtail_urls)) must stay LAST: it claims every
+#      remaining URL and 404s anything that isn't a live Wagtail page.
+#
+# The Wagtail Site root is the tree root (see blog migration 0007), so a
+# page's URL is exactly "/" + its slug path, e.g. /blog/my-post/.
 urlpatterns = [
     path("", home_view, name="home"),
     path("health/", health_check, name="health"),

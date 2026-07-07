@@ -98,9 +98,14 @@ def blog_post(db, blog_index, admin_user):
     return blog_post
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def clear_cache():
-    """Clear Django cache before each test."""
+    """Clear Django cache around every test.
+
+    Autouse because several views are wrapped in cache_page (home, sitemap,
+    feed, robots); without clearing, a response cached in one test would be
+    served to later tests with different database fixtures.
+    """
     cache.clear()
     yield
     cache.clear()

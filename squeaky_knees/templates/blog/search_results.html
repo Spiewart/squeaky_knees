@@ -39,14 +39,14 @@
                     <h5 class="card-title">
                       <a href="{{ result.url }}">{{ result.title }}</a>
                     </h5>
-                    {% if result.blogpage.date %}
+                    {% if result.date %}
                       <p class="text-muted small mb-2">
-                        Published <time datetime="{{ result.blogpage.date|date:'c' }}">
-                        {{ result.blogpage.date|date:'F j, Y' }}
+                        Published <time datetime="{{ result.date|date:'c' }}">
+                        {{ result.date|date:'F j, Y' }}
                       </time>
                     </p>
                   {% endif %}
-                  {% if result.blogpage.intro %}<p class="card-text">{{ result.blogpage.intro }}</p>{% endif %}
+                  {% if result.intro %}<p class="card-text">{{ result.intro }}</p>{% endif %}
                   <a href="{{ result.url }}" class="btn btn-sm btn-outline-primary">Read More →</a>
                 </div>
               </article>

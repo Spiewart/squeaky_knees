@@ -1,5 +1,6 @@
 """Email utilities for blog notifications."""
 
+from anymail.exceptions import AnymailError
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -49,7 +50,9 @@ def send_comment_notification(comment):
             html_message=html_message,
             fail_silently=False,
         )
-    except OSError:
+    except (OSError, AnymailError):
+        # AnymailError covers the Mailgun HTTP API used in production;
+        # it is not an OSError, so it would otherwise crash the request.
         return False
     else:
         return True
@@ -83,7 +86,9 @@ def send_comment_approval_notification(comment):
             html_message=html_message,
             fail_silently=False,
         )
-    except OSError:
+    except (OSError, AnymailError):
+        # AnymailError covers the Mailgun HTTP API used in production;
+        # it is not an OSError, so it would otherwise crash the request.
         return False
     else:
         return True

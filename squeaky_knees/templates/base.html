@@ -1,4 +1,4 @@
-{% load static i18n compress %}
+{% load static i18n compress wagtailuserbar %}
 
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
@@ -47,6 +47,7 @@
     {% endblock javascript %}
   </head>
   <body class="{% block bodyclass %}{% endblock bodyclass %}">
+    {% wagtailuserbar %}
     {% block body %}
       <div class="mb-1">
         <nav class="navbar navbar-expand-md navbar-light bg-light">

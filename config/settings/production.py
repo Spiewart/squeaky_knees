@@ -137,6 +137,15 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = EMAIL_SUBJECT_PREFIX
 # Django Admin URL regex.
 ADMIN_URL = env("DJANGO_ADMIN_URL")
 
+# Wagtail
+# ------------------------------------------------------------------------------
+# Base URL used in Wagtail admin notification emails and preview links.
+# The base.py default (http://localhost:8000) is only correct for dev.
+WAGTAILADMIN_BASE_URL = env(
+    "WAGTAILADMIN_BASE_URL",
+    default="https://squeakyknees.blog",
+)
+
 # Anymail
 # ------------------------------------------------------------------------------
 # https://anymail.readthedocs.io/en/stable/installation/#installing-anymail
