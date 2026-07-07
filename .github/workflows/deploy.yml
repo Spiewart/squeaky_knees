@@ -99,19 +99,17 @@ jobs:
               swapon --show
             fi
 
-            # Stop web/traefik to free image layers before pulling
-            echo "=== Stopping web/traefik to free space ==="
-            docker compose -f /opt/squeaky_knees/docker-compose.production.yml stop web traefik || true
+            # Zero-downtime deploy: the old stack (web + traefik) keeps
+            # serving while we pull, then migrations run in a one-off
+            # container BEFORE the web container is swapped. Traefik is
+            # never stopped, so TLS stays up throughout.
 
-            # Free disk space (remove unused containers, images, build cache)
+            # Free disk space without stopping services (in-use layers
+            # are preserved; the superseded app image is pruned at the end)
             echo "=== Cleaning up Docker disk usage ==="
             docker container prune -f
             docker image prune -af --filter "until=24h"
             docker builder prune -af
-
-            # Remove previous app image to free space before pull
-            echo "=== Removing previous app image ==="
-            docker image rm -f ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}:latest || true
 
             # Ensure app and Traefik directories exist
             mkdir -p /opt/squeaky_knees
@@ -152,15 +150,19 @@ jobs:
             # Ensure Docker network exists
             docker network create squeaky_knees_network 2>/dev/null || true
 
-            # Pull latest service images
+            # Pull latest service images (old stack still serving)
             docker compose -f /opt/squeaky_knees/docker-compose.production.yml pull
 
-            # Start services with Docker Compose
-            docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d
-
-            # Run migrations (with timeout to avoid hanging deploys)
-            timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml exec -T web \
+            # Make sure the database and cache are up, then run migrations
+            # from a one-off container using the NEW image, BEFORE the web
+            # container is swapped. New code never serves an old schema.
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d postgres redis
+            timeout 10m docker compose -f /opt/squeaky_knees/docker-compose.production.yml run --rm -T web \
               /bin/sh -lc 'AWS_EC2_METADATA_DISABLED=true uv run python manage.py migrate --noinput'
+
+            # Swap in the new web container (traefik untouched: compose
+            # only recreates containers whose image/config changed)
+            docker compose -f /opt/squeaky_knees/docker-compose.production.yml up -d
 
             # Collectstatic runs in CI now (much faster), so skip here
             echo "=== Skipping collectstatic (already run in CI) ==="
