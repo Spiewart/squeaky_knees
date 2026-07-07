@@ -8,10 +8,18 @@
   Selected by squeaky_knees.users.viewsets.UserViewSet.
 {% endcomment %}
 {% block fields %}
-  {% if form.separate_username_field %}<li>{% formattedfield form.username_field %}</li>{% endif %}
+  {% if form.separate_username_field %}
+    <li>{% formattedfield form.username_field %}</li>
+  {% endif %}
   <li>{% formattedfield form.name %}</li>
   <li>{% formattedfield form.email %}</li>
-  {% if form.password1 %}<li>{% formattedfield form.password1 %}</li>{% endif %}
-  {% if form.password2 %}<li>{% formattedfield form.password2 %}</li>{% endif %}
-  {% if form.is_active %}<li>{% formattedfield form.is_active %}</li>{% endif %}
+  {% if form.password1 %}
+    <li>{% formattedfield form.password1 %}</li>
+  {% endif %}
+  {% if form.password2 %}
+    <li>{% formattedfield form.password2 %}</li>
+  {% endif %}
+  {% if form.is_active %}
+    <li>{% formattedfield form.is_active %}</li>
+  {% endif %}
 {% endblock fields %}
