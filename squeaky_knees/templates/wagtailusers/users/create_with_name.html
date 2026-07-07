@@ -1,0 +1,16 @@
+{% extends "wagtailusers/users/create.html" %}
+
+{% load wagtailadmin_tags %}
+
+{% comment %}
+  Overrides the Account-tab fields to show the custom User model's single
+  "name" field instead of the first/last name fields Wagtail expects.
+  Selected by squeaky_knees.users.viewsets.UserViewSet.
+{% endcomment %}
+{% block fields %}
+  {% if form.separate_username_field %}<li>{% formattedfield form.username_field %}</li>{% endif %}
+  <li>{% formattedfield form.name %}</li>
+  <li>{% formattedfield form.email %}</li>
+  {% if form.password1 %}<li>{% formattedfield form.password1 %}</li>{% endif %}
+  {% if form.password2 %}<li>{% formattedfield form.password2 %}</li>{% endif %}
+{% endblock fields %}

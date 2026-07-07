@@ -88,7 +88,9 @@ THIRD_PARTY_APPS = [
     "wagtail.contrib.redirects",
     "wagtail.embeds",
     "wagtail.sites",
-    "wagtail.users",
+    # Custom AppConfig for wagtail.users: swaps in our UserViewSet whose
+    # forms use the User model's single "name" field (no first/last name).
+    "squeaky_knees.users.apps.WagtailUsersAppConfig",
     "wagtail.snippets",
     "wagtail.documents",
     "wagtail.images",

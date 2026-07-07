@@ -1,11 +1,14 @@
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from crispy_forms.helper import FormHelper
+from django import forms
 from django.contrib.auth import forms as admin_forms
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_recaptcha.fields import ReCaptchaField
 from django_recaptcha.widgets import ReCaptchaV3
+from wagtail.users.forms import UserCreationForm as WagtailBaseUserCreationForm
+from wagtail.users.forms import UserEditForm as WagtailBaseUserEditForm
 
 from config.ratelimit import is_rate_limited
 
@@ -83,3 +86,40 @@ class UserSocialSignupForm(SocialSignupForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_tag = False  # Don't render <form> tag
+
+
+class UserEditForm(WagtailBaseUserEditForm):
+    """Wagtail admin user edit form for the custom User model.
+
+    The User model removes first_name/last_name in favour of a single
+    ``name`` field; Wagtail's stock form declares First/Last name as
+    required inputs whose values silently vanish. Wired up via
+    users.viewsets.UserViewSet.
+    """
+
+    # Setting inherited declared fields to None removes them.
+    first_name = None
+    last_name = None
+    name = forms.CharField(required=False, label=_("Name"))
+
+    class Meta(WagtailBaseUserEditForm.Meta):
+        model = User
+        fields = {User.USERNAME_FIELD, "name", "email", "is_active"} | {
+            "is_superuser",
+            "groups",
+        }
+
+
+class UserCreationForm(WagtailBaseUserCreationForm):
+    """Wagtail admin user creation form (see UserEditForm docstring)."""
+
+    first_name = None
+    last_name = None
+    name = forms.CharField(required=False, label=_("Name"))
+
+    class Meta(WagtailBaseUserCreationForm.Meta):
+        model = User
+        fields = {User.USERNAME_FIELD, "name", "email"} | {
+            "is_superuser",
+            "groups",
+        }
